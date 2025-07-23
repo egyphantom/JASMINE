@@ -17,21 +17,12 @@
   <style>
     body {
       font-family: 'Cairo', sans-serif;
-      background: linear-gradient(to bottom right, #0f172a, #1e293b);
-      background-size: cover;
-      background-attachment: fixed;
-      min-height: 100vh;
-    }
-
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: #fff0f5; /* خلفية وردية فاتحة */
+      color: #444;
     }
 
     .main-btn {
-      transition: transform 0.2s, background-color 0.2s;
+      transition: transform 0.2s ease;
       border-radius: 8px;
     }
 
@@ -40,49 +31,34 @@
     }
   </style>
 </head>
-<body class="flex items-center justify-center px-4">
+<body class="flex flex-col items-center justify-center min-h-screen text-center px-4">
 
-  <div class="glass text-center p-10 max-w-md w-full mt-20 text-white shadow-lg animate-fade-in">
+  <h1 class="text-lg font-semibold text-pink-600 mb-1">
+الاميرة جاسمين 
+  </h1>
+  <p class="text-sm text-gray-600 mb-12">اختر إجراء من الخيارات التالية:</p>
 
-    <h1 class="text-3xl font-extrabold mb-10 text-teal-300 tracking-wide">
-      نظام إدارة الاميرة ياسمين 
-    </h1>
+  <div class="space-y-5 w-full max-w-xs">
 
-    <div class="space-y-6">
+    <!-- زر تسجيل مريض -->
+    <a href="register.html"
+       class="main-btn flex items-center justify-center bg-pink-500 hover:bg-pink-400 text-white py-3 px-5 text-sm font-semibold shadow-sm w-full">
+      <i class="fa-solid fa-user-plus ml-2"></i> تسجيل مريض
+    </a>
 
-      <!-- زر تسجيل مريض -->
-      <a href="register.html"
-         class="main-btn flex items-center justify-center bg-teal-600 hover:bg-teal-500 text-white py-3 px-5 text-lg font-semibold shadow-md w-full">
-        <i class="fa-solid fa-user-plus ml-3"></i>
-        تسجيل مريض
-      </a>
+    <!-- زر عرض المرضى -->
+    <a href="patients.html"
+       class="main-btn flex items-center justify-center bg-rose-500 hover:bg-rose-400 text-white py-3 px-5 text-sm font-semibold shadow-sm w-full">
+      <i class="fa-solid fa-table-list ml-2"></i> عرض المرضى
+    </a>
 
-      <!-- زر عرض المرضى -->
-      <a href="patients.html"
-         class="main-btn flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white py-3 px-5 text-lg font-semibold shadow-md w-full">
-        <i class="fa-solid fa-table-list ml-3"></i>
-        عرض المرضى
-      </a>
-
-      <!-- زر لوحة المسئول -->
-      <a href="admin.html"
-         class="main-btn flex items-center justify-center bg-slate-700 hover:bg-slate-600 text-white py-3 px-5 text-lg font-semibold shadow-md w-full">
-        <i class="fa-solid fa-lock ml-3"></i>
-        لوحة المسئول
-      </a>
-
-    </div>
+    <!-- زر لوحة المسئول -->
+    <a href="admin.html"
+       class="main-btn flex items-center justify-center bg-fuchsia-600 hover:bg-fuchsia-500 text-white py-3 px-5 text-sm font-semibold shadow-sm w-full">
+      <i class="fa-solid fa-lock ml-2"></i> لوحة المسئول
+    </a>
 
   </div>
-
-  <!-- حركة ظهور بسيطة -->
-  <script>
-    document.querySelector('.glass').classList.add('opacity-0');
-    setTimeout(() => {
-      document.querySelector('.glass').classList.remove('opacity-0');
-      document.querySelector('.glass').classList.add('opacity-100', 'transition-opacity', 'duration-700');
-    }, 100);
-  </script>
 
 </body>
 </html>

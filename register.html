@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تسجيل مريض جديد</title>
+  <title>تسجيل مريض</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,57 +17,82 @@
   <style>
     body {
       font-family: 'Cairo', sans-serif;
-      background: linear-gradient(to bottom right, #0f172a, #1e293b);
-      background-size: cover;
-      min-height: 100vh;
-    }
-
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(12px);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: #fff0f5;
+      color: #444;
     }
 
     input, textarea {
-      background-color: transparent;
-      color: white;
+      border-radius: 8px;
     }
 
     input::placeholder, textarea::placeholder {
-      color: #cbd5e1;
+      color: #aaa;
     }
 
-    input:focus, textarea:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px #38b2ac99;
+    .spinner {
+      border: 2px solid #fff;
+      border-top: 2px solid #f472b6;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+
+    .toast {
+      animation: slideIn 0.3s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
-<body class="flex items-center justify-center px-4">
+<body class="flex items-center justify-center px-4 py-10 min-h-screen">
 
-  <div class="glass p-8 mt-16 max-w-xl w-full text-white">
-    <h2 class="text-2xl font-bold text-center mb-6 text-teal-300">
-      <i class="fa-solid fa-user-plus mr-2"></i> تسجيل مريض جديد
+  <div class="w-full max-w-xl">
+
+    <h2 class="text-lg font-bold text-pink-600 mb-6 text-center">
+      <i class="fa-solid fa-user-plus ml-2"></i> تسجيل مريض جديد
     </h2>
 
     <form id="patientForm" class="space-y-4">
-      <input type="text" id="name" placeholder="الاسم" required class="w-full p-3 rounded-md border border-slate-600" />
-      <input type="number" id="age" placeholder="العمر" required class="w-full p-3 rounded-md border border-slate-600" />
-      <input type="text" id="phone" placeholder="رقم الهاتف" required class="w-full p-3 rounded-md border border-slate-600" />
-      <input type="number" id="weight" placeholder="الوزن الحالي (كجم)" required class="w-full p-3 rounded-md border border-slate-600" />
-      <textarea id="notes" placeholder="ملاحظات إضافية" rows="3" class="w-full p-3 rounded-md border border-slate-600 resize-none"></textarea>
 
-      <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-white p-3 rounded-md font-semibold text-lg">
-        <i class="fa-solid fa-floppy-disk mr-2"></i> حفظ البيانات
+      <input type="text" id="name" placeholder="الاسم الكامل" required
+        class="w-full border border-gray-300 p-3 text-sm" />
+
+      <input type="number" id="age" placeholder="العمر" required
+        class="w-full border border-gray-300 p-3 text-sm" />
+
+      <input type="text" id="phone" placeholder="رقم الهاتف" required
+        class="w-full border border-gray-300 p-3 text-sm" />
+
+      <input type="number" id="weight" placeholder="الوزن الحالي (كجم)" required
+        class="w-full border border-gray-300 p-3 text-sm" />
+
+      <textarea id="notes" rows="3" placeholder="ملاحظات إضافية"
+        class="w-full border border-gray-300 p-3 text-sm resize-none"></textarea>
+
+      <button id="saveBtn" type="submit"
+        class="w-full bg-pink-500 hover:bg-pink-400 text-white p-3 text-sm font-semibold rounded-md flex items-center justify-center gap-2">
+        <span id="btnText"><i class="fa-solid fa-floppy-disk ml-1"></i> حفظ البيانات</span>
+        <span id="spinner" class="spinner hidden"></span>
       </button>
 
-      <p id="success" class="text-green-400 text-center mt-3"></p>
-      <p id="error" class="text-red-400 text-center mt-2"></p>
     </form>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Toast إشعار عائم -->
+  <div id="toast"
+       class="toast fixed bottom-4 right-4 bg-white border border-gray-300 text-gray-800 px-4 py-3 rounded-md shadow-lg text-sm hidden z-50">
+  </div>
+
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
@@ -86,11 +111,28 @@
     const db = getFirestore(app);
 
     const form = document.getElementById("patientForm");
-    const success = document.getElementById("success");
-    const error = document.getElementById("error");
+    const toast = document.getElementById("toast");
+    const saveBtn = document.getElementById("saveBtn");
+    const spinner = document.getElementById("spinner");
+    const btnText = document.getElementById("btnText");
+
+    const showToast = (message, color = "green") => {
+      toast.textContent = message;
+      toast.classList.remove("hidden");
+      toast.classList.remove("text-green-600", "text-red-600");
+      toast.classList.add(`text-${color}-600`);
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3000);
+    };
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      // شغل اللودينج
+      spinner.classList.remove("hidden");
+      btnText.textContent = "جاري الحفظ...";
+
       const name = document.getElementById("name").value.trim();
       const age = Number(document.getElementById("age").value);
       const phone = document.getElementById("phone").value.trim();
@@ -102,15 +144,19 @@
           name, age, phone, weight, notes,
           createdAt: serverTimestamp()
         });
-        success.textContent = "✅ تم حفظ البيانات بنجاح";
-        error.textContent = "";
+
+        showToast(" تم حفظ البيانات بنجاح يا قمري", "green");
         form.reset();
       } catch (err) {
-        error.textContent = "❌ حدث خطأ أثناء الحفظ";
-        success.textContent = "";
         console.error(err);
+        showToast("❌ حدث خطأ أثناء الحفظ", "red");
       }
+
+      // وقف اللودينج
+      spinner.classList.add("hidden");
+      btnText.innerHTML = '<i class="fa-solid fa-floppy-disk ml-1"></i> حفظ البيانات';
     });
   </script>
+
 </body>
 </html>

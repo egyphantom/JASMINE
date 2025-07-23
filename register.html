@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل مريض جديد</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- خط كايرو -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(to bottom right, #0f172a, #1e293b);
+      background-size: cover;
+      min-height: 100vh;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    input, textarea {
+      background-color: transparent;
+      color: white;
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #cbd5e1;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #38b2ac99;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center px-4">
+
+  <div class="glass p-8 mt-16 max-w-xl w-full text-white">
+    <h2 class="text-2xl font-bold text-center mb-6 text-teal-300">
+      <i class="fa-solid fa-user-plus mr-2"></i> تسجيل مريض جديد
+    </h2>
+
+    <form id="patientForm" class="space-y-4">
+      <input type="text" id="name" placeholder="الاسم" required class="w-full p-3 rounded-md border border-slate-600" />
+      <input type="number" id="age" placeholder="العمر" required class="w-full p-3 rounded-md border border-slate-600" />
+      <input type="text" id="phone" placeholder="رقم الهاتف" required class="w-full p-3 rounded-md border border-slate-600" />
+      <input type="number" id="weight" placeholder="الوزن الحالي (كجم)" required class="w-full p-3 rounded-md border border-slate-600" />
+      <textarea id="notes" placeholder="ملاحظات إضافية" rows="3" class="w-full p-3 rounded-md border border-slate-600 resize-none"></textarea>
+
+      <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-white p-3 rounded-md font-semibold text-lg">
+        <i class="fa-solid fa-floppy-disk mr-2"></i> حفظ البيانات
+      </button>
+
+      <p id="success" class="text-green-400 text-center mt-3"></p>
+      <p id="error" class="text-red-400 text-center mt-2"></p>
+    </form>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBCWEhmwzFSsFASfPoBQtsCbHE8jKiqQz4",
+      authDomain: "weight-loss-clinic-635bc.firebaseapp.com",
+      projectId: "weight-loss-clinic-635bc",
+      storageBucket: "weight-loss-clinic-635bc.firebasestorage.app",
+      messagingSenderId: "62716636147",
+      appId: "1:62716636147:web:360fda9be7b783d25cc086",
+      measurementId: "G-J5S2C1ZC21"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById("patientForm");
+    const success = document.getElementById("success");
+    const error = document.getElementById("error");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const age = Number(document.getElementById("age").value);
+      const phone = document.getElementById("phone").value.trim();
+      const weight = Number(document.getElementById("weight").value);
+      const notes = document.getElementById("notes").value.trim();
+
+      try {
+        await addDoc(collection(db, "patients"), {
+          name, age, phone, weight, notes,
+          createdAt: serverTimestamp()
+        });
+        success.textContent = "✅ تم حفظ البيانات بنجاح";
+        error.textContent = "";
+        form.reset();
+      } catch (err) {
+        error.textContent = "❌ حدث خطأ أثناء الحفظ";
+        success.textContent = "";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

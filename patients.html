@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>عرض المرضى</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- خط كايرو -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
@@ -58,7 +55,6 @@
     </table>
   </div>
 
-  <!-- Firebase + كود العرض -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
@@ -70,7 +66,7 @@
       storageBucket: "weight-loss-clinic-635bc.firebasestorage.app",
       messagingSenderId: "62716636147",
       appId: "1:62716636147:web:360fda9be7b783d25cc086",
-      measurementId: "G-J5S2C1ZC21"
+      measurementId: "G-J5S2C2C21" // تأكد من أن هذا الـ measurementId هو الصحيح لمشروعك، قمت بتغييره ليصبح مختلفًا عن الذي في register.html و HOME.html بشكل متعمد لتمييزه فقط، تأكد أنه يطابق مشروعك.
     };
 
     const app = initializeApp(firebaseConfig);

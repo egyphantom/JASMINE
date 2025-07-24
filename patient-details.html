@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ملف المريض</title>
+  <title>ملف المريض المتكامل</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -60,6 +60,19 @@
     .tab-content.active {
       display: block;
     }
+
+    /* Editable input styles */
+    .editable-input {
+        border: 1px solid #ddd;
+        padding: 8px;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .editable-input:focus {
+        outline: none;
+        border-color: #db2777;
+    }
   </style>
 </head>
 <body class="p-6">
@@ -78,38 +91,89 @@
       <i class="fa-solid fa-user-injured ml-2"></i> ملف المريض: <span id="patientNameHeader"></span>
     </h2>
 
+    <div id="importantNotesContainer" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg hidden" role="alert">
+        <p class="font-bold">ملاحظة هامة:</p>
+        <p id="importantNotesText"></p>
+        <button id="editImportantNotesBtn" class="text-yellow-700 hover:text-yellow-900 text-xs mt-2 underline">تعديل</button>
+    </div>
+
     <div class="border-b border-pink-200 mb-6">
-      <nav class="-mb-px flex justify-center space-x-4 space-x-reverse" aria-label="Tabs">
-        <button id="tab-data-btn" class="tab-button py-3 px-6 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
-          <i class="fa-solid fa-clipboard-user ml-2"></i> بيانات المريض
+      <nav class="-mb-px flex flex-wrap justify-center space-x-2 space-x-reverse md:space-x-4 md:space-x-reverse" aria-label="Tabs">
+        <button id="tab-summary-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-chart-line ml-1"></i> ملخص
         </button>
-        <button id="tab-diagnosis-btn" class="tab-button py-3 px-6 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
-          <i class="fa-solid fa-file-medical ml-2"></i> التشخيص
+        <button id="tab-data-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-clipboard-user ml-1"></i> بيانات المريض
         </button>
-        <button id="tab-treatment-btn" class="tab-button py-3 px-6 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
-          <i class="fa-solid fa-prescription-bottle-medical ml-2"></i> خطة العلاج
+        <button id="tab-diagnosis-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-file-medical ml-1"></i> التشخيص
         </button>
-        <button id="tab-followup-btn" class="tab-button py-3 px-6 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
-          <i class="fa-solid fa-calendar-check ml-2"></i> المتابعة
+        <button id="tab-treatment-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-prescription-bottle-medical ml-1"></i> خطة العلاج
         </button>
-        <button id="tab-diet-btn" class="tab-button py-3 px-6 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
-          <i class="fa-solid fa-bowl-food ml-2"></i> النظام الغذائي
+        <button id="tab-followup-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-calendar-check ml-1"></i> المتابعة
+        </button>
+        <button id="tab-diet-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-bowl-food ml-1"></i> النظام الغذائي
+        </button>
+        <button id="tab-attachments-btn" class="tab-button py-3 px-3 md:px-6 text-xs md:text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent focus:outline-none">
+          <i class="fa-solid fa-paperclip ml-1"></i> ملفات مرفقة
         </button>
       </nav>
     </div>
 
     <div class="bg-white p-6 rounded-lg shadow-md">
-      <div id="tab-data-content" class="tab-content active">
+      <div id="tab-summary-content" class="tab-content active">
+        <h3 class="text-lg font-semibold text-pink-600 mb-4">ملخص حالة المريض</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
+          <div><strong class="text-gray-600">الاسم:</strong> <span id="summaryPatientName"></span></div>
+          <div><strong class="text-gray-600">العمر:</strong> <span id="summaryPatientAge"></span> سنة</div>
+          <div><strong class="text-gray-600">الوزن الحالي:</strong> <span id="summaryPatientWeight"></span> كجم</div>
+          <div><strong class="text-gray-600">الطول:</strong> <span id="summaryPatientHeight"></span> سم</div>
+          <div><strong class="text-gray-600">تاريخ أول زيارة:</strong> <span id="summaryPatientCreatedAt"></span></div>
+          <div><strong class="text-gray-600">آخر تحديث للبيانات:</strong> <span id="summaryPatientLastUpdated"></span></div>
+          <div><strong class="text-gray-600">مؤشر كتلة الجسم (BMI):</strong> <span id="summaryBMI" class="font-bold"></span></div>
+          <div><strong class="text-gray-600">تصنيف BMI:</strong> <span id="summaryBMICategory"></span></div>
+        </div>
+
+        <h4 class="text-md font-semibold text-pink-600 mb-3">أهداف الوزن</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+            <div>
+                <label for="targetWeight" class="block text-gray-600 mb-1">الوزن المستهدف (كجم):</label>
+                <input type="number" id="targetWeight" class="editable-input" placeholder="أدخل الوزن المستهدف">
+            </div>
+            <div>
+                <label for="initialWeight" class="block text-gray-600 mb-1">الوزن الأولي (عند التسجيل):</label>
+                <span id="initialWeightDisplay" class="block p-2 border border-gray-200 rounded-md bg-gray-50"></span>
+            </div>
+            <div>
+                <strong class="text-gray-600">الوزن الذي تم فقده:</strong> <span id="weightLost" class="font-bold text-green-600"></span> كجم
+            </div>
+            <div>
+                <strong class="text-gray-600">الوزن المتبقي للهدف:</strong> <span id="weightRemaining" class="font-bold text-blue-600"></span> كجم
+            </div>
+        </div>
+        <button id="saveTargetWeightBtn" class="bg-pink-500 hover:bg-pink-400 text-white py-2 px-4 rounded-md text-sm font-semibold">
+            <i class="fa-solid fa-bullseye ml-2"></i> حفظ الهدف
+        </button>
+      </div>
+
+      <div id="tab-data-content" class="tab-content">
         <h3 class="text-lg font-semibold text-pink-600 mb-4">البيانات الأساسية</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div><strong class="text-gray-600">الاسم:</strong> <span id="patientName"></span></div>
-          <div><strong class="text-gray-600">رقم الهاتف:</strong> <span id="patientPhone"></span></div>
-          <div><strong class="text-gray-600">العمر:</strong> <span id="patientAge"></span> سنة</div>
-          <div><strong class="text-gray-600">الوزن:</strong> <span id="patientWeight"></span> كجم</div>
-          <div class="md:col-span-2"><strong class="text-gray-600">الملاحظات:</strong> <span id="patientNotes"></span></div>
+          <div><strong class="text-gray-600">الاسم:</strong> <input type="text" id="editPatientName" class="editable-input" /></div>
+          <div><strong class="text-gray-600">رقم الهاتف:</strong> <input type="text" id="editPatientPhone" class="editable-input" /></div>
+          <div><strong class="text-gray-600">العمر:</strong> <input type="number" id="editPatientAge" class="editable-input" /> سنة</div>
+          <div><strong class="text-gray-600">الوزن:</strong> <input type="number" id="editPatientWeight" class="editable-input" /> كجم</div>
+          <div><strong class="text-gray-600">الطول (سم):</strong> <input type="number" id="editPatientHeight" class="editable-input" placeholder="أدخل الطول" /></div>
+          <div class="md:col-span-2"><strong class="text-gray-600">الملاحظات:</strong> <textarea id="editPatientNotes" rows="3" class="editable-input resize-none"></textarea></div>
           <div><strong class="text-gray-600">تاريخ أول زيارة:</strong> <span id="patientCreatedAt"></span></div>
           <div><strong class="text-gray-600">آخر تعديل:</strong> <span id="patientLastUpdated"></span></div>
         </div>
+        <button id="savePatientDataBtn" class="mt-6 bg-pink-500 hover:bg-pink-400 text-white py-2 px-4 rounded-md text-sm font-semibold">
+            <i class="fa-solid fa-save ml-2"></i> حفظ بيانات المريض
+        </button>
       </div>
 
       <div id="tab-diagnosis-content" class="tab-content">
@@ -119,6 +183,10 @@
             <i class="fa-solid fa-save ml-2"></i> حفظ التشخيص
         </button>
         <p class="text-xs text-gray-500 mt-2">آخر تحديث للتشخيص: <span id="diagnosisLastUpdated">لم يتم إدخال تشخيص بعد</span></p>
+        <h4 class="text-md font-semibold text-gray-700 mt-6 mb-3">سجل التعديلات</h4>
+        <ul id="diagnosisAuditLog" class="list-disc list-inside text-xs text-gray-600 bg-gray-50 p-3 rounded-md">
+            <li>لا يوجد سجل تعديلات بعد.</li>
+        </ul>
       </div>
 
       <div id="tab-treatment-content" class="tab-content">
@@ -128,6 +196,10 @@
             <i class="fa-solid fa-save ml-2"></i> حفظ خطة العلاج
         </button>
         <p class="text-xs text-gray-500 mt-2">آخر تحديث لخطة العلاج: <span id="treatmentLastUpdated">لم يتم إدخال خطة علاج بعد</span></p>
+        <h4 class="text-md font-semibold text-gray-700 mt-6 mb-3">سجل التعديلات</h4>
+        <ul id="treatmentAuditLog" class="list-disc list-inside text-xs text-gray-600 bg-gray-50 p-3 rounded-md">
+            <li>لا يوجد سجل تعديلات بعد.</li>
+        </ul>
       </div>
 
       <div id="tab-followup-content" class="tab-content">
@@ -139,10 +211,11 @@
                 <th class="p-3 border-b border-gray-200">التاريخ</th>
                 <th class="p-3 border-b border-gray-200">الوزن (كجم)</th>
                 <th class="p-3 border-b border-gray-200">ملاحظات</th>
+                <th class="p-3 border-b border-gray-200">الإجراءات</th>
               </tr>
             </thead>
             <tbody id="followupTableBody">
-              <tr><td colspan="3" class="text-center text-gray-500 p-4">لا توجد متابعات مسجلة بعد.</td></tr>
+              <tr><td colspan="4" class="text-center text-gray-500 p-4">لا توجد متابعات مسجلة بعد.</td></tr>
             </tbody>
           </table>
         </div>
@@ -159,30 +232,74 @@
       </div>
 
       <div id="tab-diet-content" class="tab-content">
-        <h3 class="text-lg font-semibold text-pink-600 mb-4">النظام الغذائي</h3>
+        <h3 class="text-lg font-semibold text-pink-600 mb-4">النظام الغذائي المخصص</h3>
         <textarea id="dietTextInput" rows="6" class="w-full border border-gray-300 p-3 text-sm rounded-md mb-3" placeholder="اكتب تفاصيل النظام الغذائي يدويًا..."></textarea>
         <button id="saveDietTextBtn" class="bg-pink-500 hover:bg-pink-400 text-white py-2 px-4 rounded-md text-sm font-semibold">
             <i class="fa-solid fa-save ml-2"></i> حفظ النظام المكتوب
         </button>
         <p class="text-xs text-gray-500 mt-2 mb-4">آخر تحديث للنظام المكتوب: <span id="dietTextLastUpdated">لم يتم إدخال نظام مكتوب بعد</span></p>
 
-        <h4 class="text-md font-semibold text-gray-700 mb-3">رفع ملف نظام غذائي (PDF/Word)</h4>
+        <h4 class="text-md font-semibold text-gray-700 mb-3">النظام الغذائي المرفق (قالب أو مخصص)</h4>
+        <div class="mb-4">
+            <label for="dietTemplateSelect" class="block text-sm font-medium text-gray-700 mb-1">اختر قالب نظام غذائي جاهز:</label>
+            <select id="dietTemplateSelect" class="w-full border border-gray-300 p-3 text-sm rounded-md focus:outline-none focus:border-pink-500">
+                <option value="">لا يوجد قالب محدد</option>
+            </select>
+            <button id="assignDietTemplateBtn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-semibold mt-3">
+                <i class="fa-solid fa-link ml-2"></i> تعيين القالب للمريض
+            </button>
+        </div>
+
+        <h4 class="text-md font-semibold text-gray-700 mb-3">رفع ملف نظام غذائي مخصص (PDF/Word)</h4>
         <input type="file" id="dietFileInput" accept=".pdf,.doc,.docx" class="w-full mb-3 text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100">
         <button id="uploadDietFileBtn" class="bg-pink-500 hover:bg-pink-400 text-white py-2 px-4 rounded-md text-sm font-semibold">
             <i class="fa-solid fa-upload ml-2"></i> رفع الملف
         </button>
-        <div id="uploadedFileContainer" class="mt-4 p-3 border border-gray-200 rounded-md bg-pink-50 hidden">
-            <p class="text-sm text-gray-700">الملف المرفوع: <span id="uploadedFileName" class="font-medium text-pink-700"></span></p>
-            <div class="mt-2 flex gap-2">
-                <a id="viewFileBtn" href="#" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-semibold">
-                    <i class="fa-solid fa-eye ml-1"></i> عرض
-                </a>
-                <button id="deleteFileBtn" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-md text-xs font-semibold">
-                    <i class="fa-solid fa-trash ml-1"></i> حذف
-                </button>
-            </div>
+        <p id="dietFileUploadStatus" class="text-sm mt-2"></p>
+
+        <h4 class="text-md font-semibold text-gray-700 mt-6 mb-3">سجل الأنظمة الغذائية المعينة</h4>
+        <div class="overflow-x-auto">
+            <table class="w-full bg-white text-sm border border-gray-200 rounded-md">
+                <thead class="bg-pink-100 text-pink-700 font-bold">
+                    <tr>
+                        <th class="p-3 border-b border-gray-200">التاريخ</th>
+                        <th class="p-3 border-b border-gray-200">النوع</th>
+                        <th class="p-3 border-b border-gray-200">الاسم/المحتوى</th>
+                        <th class="p-3 border-b border-gray-200">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="assignedDietPlansTableBody">
+                    <tr><td colspan="4" class="text-center text-gray-500 p-4">لا توجد أنظمة غذائية معينة.</td></tr>
+                </tbody>
+            </table>
         </div>
-        <p id="fileUploadStatus" class="text-sm mt-2"></p>
+      </div>
+
+      <div id="tab-attachments-content" class="tab-content">
+        <h3 class="text-lg font-semibold text-pink-600 mb-4">إدارة الملفات المرفقة</h3>
+        <input type="file" id="generalAttachmentInput" class="w-full mb-3 text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100">
+        <input type="text" id="attachmentDescription" placeholder="وصف للملف (مثلاً: نتائج تحاليل دم، صورة قبل)" class="w-full border border-gray-300 p-3 text-sm rounded-md mb-3">
+        <button id="uploadGeneralAttachmentBtn" class="bg-pink-500 hover:bg-pink-400 text-white py-2 px-4 rounded-md text-sm font-semibold">
+            <i class="fa-solid fa-cloud-arrow-up ml-2"></i> رفع ملف
+        </button>
+        <p id="attachmentUploadStatus" class="text-sm mt-2"></p>
+
+        <h4 class="text-md font-semibold text-gray-700 mt-6 mb-3">قائمة الملفات المرفقة</h4>
+        <div class="overflow-x-auto">
+            <table class="w-full bg-white text-sm border border-gray-200 rounded-md">
+                <thead class="bg-pink-100 text-pink-700 font-bold">
+                    <tr>
+                        <th class="p-3 border-b border-gray-200">اسم الملف</th>
+                        <th class="p-3 border-b border-gray-200">الوصف</th>
+                        <th class="p-3 border-b border-gray-200">التاريخ</th>
+                        <th class="p-3 border-b border-gray-200">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="generalAttachmentsTableBody">
+                    <tr><td colspan="4" class="text-center text-gray-500 p-4">لا توجد ملفات مرفقة.</td></tr>
+                </tbody>
+            </table>
+        </div>
       </div>
 
     </div>
@@ -193,10 +310,10 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
-    // Your Firebase Configuration (from HOME.html, register.html, patients.html)
+    // Your Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBCWEhmwzFSsFASfPoBQtsCbHE8jKiqQz4",
       authDomain: "weight-loss-clinic-635bc.firebaseapp.com",
@@ -214,36 +331,60 @@
     const correctPassword = "love"; // The password for the modal
     let patientId = null; // To store the patient ID from the URL
     let patientRef = null; // Firestore document reference for the current patient
+    let currentPatientData = null; // Stores the entire patient document data
 
-    // DOM Elements
+    // DOM Elements - General
     const passwordModal = document.getElementById("passwordModal");
     const passwordInput = document.getElementById("passwordInput");
     const submitPasswordBtn = document.getElementById("submitPasswordBtn");
     const passwordError = document.getElementById("passwordError");
     const mainContent = document.getElementById("mainContent");
     const patientNameHeader = document.getElementById("patientNameHeader");
+    const toast = document.getElementById("toast");
+    const importantNotesContainer = document.getElementById("importantNotesContainer");
+    const importantNotesText = document.getElementById("importantNotesText");
+    const editImportantNotesBtn = document.getElementById("editImportantNotesBtn");
 
     const tabButtons = document.querySelectorAll(".tab-button");
     const tabContents = document.querySelectorAll(".tab-content");
 
-    // Patient Data Tab Elements
-    const patientName = document.getElementById("patientName");
-    const patientPhone = document.getElementById("patientPhone");
-    const patientAge = document.getElementById("patientAge");
-    const patientWeight = document.getElementById("patientWeight");
-    const patientNotes = document.getElementById("patientNotes");
-    const patientCreatedAt = document.getElementById("patientCreatedAt");
-    const patientLastUpdated = document.getElementById("patientLastUpdated");
+    // Summary Tab Elements
+    const summaryPatientName = document.getElementById("summaryPatientName");
+    const summaryPatientAge = document.getElementById("summaryPatientAge");
+    const summaryPatientWeight = document.getElementById("summaryPatientWeight");
+    const summaryPatientHeight = document.getElementById("summaryPatientHeight");
+    const summaryPatientCreatedAt = document.getElementById("summaryPatientCreatedAt");
+    const summaryPatientLastUpdated = document.getElementById("summaryPatientLastUpdated");
+    const summaryBMI = document.getElementById("summaryBMI");
+    const summaryBMICategory = document.getElementById("summaryBMICategory");
+    const targetWeightInput = document.getElementById("targetWeight");
+    const initialWeightDisplay = document.getElementById("initialWeightDisplay");
+    const weightLostDisplay = document.getElementById("weightLost");
+    const weightRemainingDisplay = document.getElementById("weightRemaining");
+    const saveTargetWeightBtn = document.getElementById("saveTargetWeightBtn");
+
+    // Patient Data Tab Elements (Editable)
+    const editPatientName = document.getElementById("editPatientName");
+    const editPatientPhone = document.getElementById("editPatientPhone");
+    const editPatientAge = document.getElementById("editPatientAge");
+    const editPatientWeight = document.getElementById("editPatientWeight");
+    const editPatientHeight = document.getElementById("editPatientHeight");
+    const editPatientNotes = document.getElementById("editPatientNotes");
+    const savePatientDataBtn = document.getElementById("savePatientDataBtn");
+    const patientCreatedAt = document.getElementById("patientCreatedAt"); // Also in data tab
+    const patientLastUpdated = document.getElementById("patientLastUpdated"); // Also in data tab
 
     // Diagnosis Tab Elements
     const diagnosisInput = document.getElementById("diagnosisInput");
     const saveDiagnosisBtn = document.getElementById("saveDiagnosisBtn");
     const diagnosisLastUpdated = document.getElementById("diagnosisLastUpdated");
+    const diagnosisAuditLog = document.getElementById("diagnosisAuditLog");
 
     // Treatment Tab Elements
     const treatmentInput = document.getElementById("treatmentInput");
     const saveTreatmentBtn = document.getElementById("saveTreatmentBtn");
     const treatmentLastUpdated = document.getElementById("treatmentLastUpdated");
+    const treatmentAuditLog = document.getElementById("treatmentAuditLog");
 
     // Follow-up Tab Elements
     const followupDateInput = document.getElementById("followupDate");
@@ -256,26 +397,31 @@
     const dietTextInput = document.getElementById("dietTextInput");
     const saveDietTextBtn = document.getElementById("saveDietTextBtn");
     const dietTextLastUpdated = document.getElementById("dietTextLastUpdated");
+    const dietTemplateSelect = document.getElementById("dietTemplateSelect");
+    const assignDietTemplateBtn = document.getElementById("assignDietTemplateBtn");
     const dietFileInput = document.getElementById("dietFileInput");
     const uploadDietFileBtn = document.getElementById("uploadDietFileBtn");
-    const uploadedFileContainer = document.getElementById("uploadedFileContainer");
-    const uploadedFileName = document.getElementById("uploadedFileName");
-    const viewFileBtn = document.getElementById("viewFileBtn");
-    const deleteFileBtn = document.getElementById("deleteFileBtn");
-    const fileUploadStatus = document.getElementById("fileUploadStatus");
+    const dietFileUploadStatus = document.getElementById("dietFileUploadStatus");
+    const assignedDietPlansTableBody = document.getElementById("assignedDietPlansTableBody");
 
-    const toast = document.getElementById("toast");
+    // General Attachments Tab Elements
+    const generalAttachmentInput = document.getElementById("generalAttachmentInput");
+    const attachmentDescription = document.getElementById("attachmentDescription");
+    const uploadGeneralAttachmentBtn = document.getElementById("uploadGeneralAttachmentBtn");
+    const attachmentUploadStatus = document.getElementById("attachmentUploadStatus");
+    const generalAttachmentsTableBody = document.getElementById("generalAttachmentsTableBody");
+
 
     // Utility function for showing toasts
     const showToast = (message, type = "success") => {
       toast.textContent = message;
-      toast.classList.remove("hidden", "text-green-600", "text-red-600", "text-blue-600");
+      toast.classList.remove("hidden", "text-green-600", "text-red-600", "text-blue-600", "bg-white");
       if (type === "success") {
-        toast.classList.add("text-green-600");
+        toast.classList.add("text-green-600", "bg-green-50");
       } else if (type === "error") {
-        toast.classList.add("text-red-600");
+        toast.classList.add("text-red-600", "bg-red-50");
       } else if (type === "info") {
-        toast.classList.add("text-blue-600");
+        toast.classList.add("text-blue-600", "bg-blue-50");
       }
       toast.classList.remove("hidden");
       setTimeout(() => {
@@ -283,24 +429,45 @@
       }, 3000);
     };
 
-    // Function to format Firestore Timestamps
+    // Function to format Firestore Timestamps using native Date.toLocaleString
     const formatFirestoreTimestamp = (timestamp) => {
       if (!timestamp) return "غير متاح";
-      // Check if it's a Firestore Timestamp object, if not, assume it's already a Date string or null
-      if (timestamp.toDate) {
-        const date = timestamp.toDate();
-        return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      let date;
+      if (timestamp.toDate) { // Check if it's a Firestore Timestamp object
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) { // Check if it's already a Date object
+        date = timestamp;
+      } else if (typeof timestamp === 'string' || typeof timestamp === 'number') { // Try parsing if string/number
+          date = new Date(timestamp);
+      } else {
+          return "غير متاح"; // Unknown format
       }
-      // If it's not a Firestore Timestamp object, try to parse it as a Date
-      try {
-        const date = new Date(timestamp);
-        if (!isNaN(date)) {
-          return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      if (isNaN(date.getTime())) return "غير متاح"; // Check for invalid date
+
+      return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Calculate BMI
+    const calculateBMI = (weightKg, heightCm) => {
+        if (!weightKg || !heightCm || heightCm === 0) return { value: 'N/A', category: 'N/A' };
+        const heightM = heightCm / 100;
+        const bmiValue = weightKg / (heightM * heightM);
+        let category;
+        if (bmiValue < 18.5) {
+            category = 'نقص حاد في الوزن';
+        } else if (bmiValue >= 18.5 && bmiValue < 24.9) {
+            category = 'وزن صحي';
+        } else if (bmiValue >= 25 && bmiValue < 29.9) {
+            category = 'زيادة في الوزن';
+        } else if (bmiValue >= 30 && bmiValue < 34.9) {
+            category = 'سمنة (درجة أولى)';
+        } else if (bmiValue >= 35 && bmiValue < 39.9) {
+            category = 'سمنة مفرطة (درجة ثانية)';
+        } else {
+            category = 'سمنة مفرطة جدًا (درجة ثالثة)';
         }
-      } catch (e) {
-        // Ignore error, return default string
-      }
-      return "غير متاح";
+        return { value: bmiValue.toFixed(2), category: category };
     };
 
     // Password Protection Logic
@@ -309,6 +476,7 @@
         passwordModal.classList.add("hidden");
         mainContent.classList.remove("hidden");
         loadPatientData(); // Load patient data after successful login
+        loadDietTemplatesForDropdown(); // Load diet templates
       } else {
         passwordError.classList.remove("hidden");
       }
@@ -323,11 +491,8 @@
     // Tab Switching Logic
     tabButtons.forEach(button => {
       button.addEventListener("click", () => {
-        // Deactivate all buttons and hide all content
         tabButtons.forEach(btn => btn.classList.remove("active"));
         tabContents.forEach(content => content.classList.remove("active"));
-
-        // Activate clicked button and show corresponding content
         button.classList.add("active");
         const targetTabId = button.id.replace("-btn", "-content");
         document.getElementById(targetTabId).classList.add("active");
@@ -335,7 +500,7 @@
     });
 
     // Default to the first tab on load
-    document.getElementById("tab-data-btn").click();
+    document.getElementById("tab-summary-btn").click();
 
 
     // Function to load patient data from Firestore
@@ -353,39 +518,82 @@
       try {
         const patientDoc = await getDoc(patientRef);
         if (patientDoc.exists()) {
-          const data = patientDoc.data();
+          currentPatientData = patientDoc.data();
 
-          // Populate Patient Data Tab
-          patientNameHeader.textContent = data.name;
-          patientName.textContent = data.name;
-          patientPhone.textContent = data.phone;
-          patientAge.textContent = data.age;
-          patientWeight.textContent = data.weight;
-          patientNotes.textContent = data.notes || "لا توجد ملاحظات";
-          patientCreatedAt.textContent = formatFirestoreTimestamp(data.createdAt);
-          patientLastUpdated.textContent = formatFirestoreTimestamp(data.lastUpdated) || "لم يتم التعديل بعد";
+          // Populate Important Notes
+          if (currentPatientData.importantNotes) {
+              importantNotesText.textContent = currentPatientData.importantNotes;
+              importantNotesContainer.classList.remove("hidden");
+          } else {
+              importantNotesContainer.classList.add("hidden");
+          }
+
+          // Populate Summary Tab
+          summaryPatientName.textContent = currentPatientData.name;
+          summaryPatientAge.textContent = currentPatientData.age;
+          summaryPatientWeight.textContent = currentPatientData.weight;
+          summaryPatientHeight.textContent = currentPatientData.height || 'غير محدد';
+          summaryPatientCreatedAt.textContent = formatFirestoreTimestamp(currentPatientData.createdAt);
+          summaryPatientLastUpdated.textContent = formatFirestoreTimestamp(currentPatientData.lastUpdated) || "لم يتم التعديل بعد";
+
+          const bmiResult = calculateBMI(currentPatientData.weight, currentPatientData.height);
+          summaryBMI.textContent = bmiResult.value;
+          summaryBMICategory.textContent = bmiResult.category;
+
+          targetWeightInput.value = currentPatientData.targetWeight || '';
+          initialWeightDisplay.textContent = currentPatientData.initialWeight || currentPatientData.weight; // Use initialWeight if exists, else current weight
+          
+          const initialWeight = currentPatientData.initialWeight || currentPatientData.weight;
+          const weightLost = initialWeight - currentPatientData.weight;
+          weightLostDisplay.textContent = weightLost.toFixed(2);
+
+          const targetWeight = currentPatientData.targetWeight;
+          if (targetWeight && currentPatientData.weight) {
+              const remaining = currentPatientData.weight - targetWeight;
+              weightRemainingDisplay.textContent = remaining.toFixed(2);
+              if (remaining <= 0) {
+                  weightRemainingDisplay.classList.remove("text-blue-600");
+                  weightRemainingDisplay.classList.add("text-green-600");
+              } else {
+                  weightRemainingDisplay.classList.remove("text-green-600");
+                  weightRemainingDisplay.classList.add("text-blue-600");
+              }
+          } else {
+              weightRemainingDisplay.textContent = 'غير محدد';
+          }
+
+          // Populate Patient Data Tab (Editable)
+          editPatientName.value = currentPatientData.name;
+          editPatientPhone.value = currentPatientData.phone;
+          editPatientAge.value = currentPatientData.age;
+          editPatientWeight.value = currentPatientData.weight;
+          editPatientHeight.value = currentPatientData.height || '';
+          editPatientNotes.value = currentPatientData.notes || "";
+          patientCreatedAt.textContent = formatFirestoreTimestamp(currentPatientData.createdAt);
+          patientLastUpdated.textContent = formatFirestoreTimestamp(currentPatientData.lastUpdated) || "لم يتم التعديل بعد";
+
 
           // Populate Diagnosis Tab
-          diagnosisInput.value = data.diagnosis || "";
-          diagnosisLastUpdated.textContent = formatFirestoreTimestamp(data.diagnosisLastUpdated) || "لم يتم إدخال تشخيص بعد";
+          diagnosisInput.value = currentPatientData.diagnosis || "";
+          diagnosisLastUpdated.textContent = formatFirestoreTimestamp(currentPatientData.diagnosisLastUpdated) || "لم يتم إدخال تشخيص بعد";
+          renderAuditLog(diagnosisAuditLog, currentPatientData.diagnosisHistory || []);
 
           // Populate Treatment Tab
-          treatmentInput.value = data.treatment || "";
-          treatmentLastUpdated.textContent = formatFirestoreTimestamp(data.treatmentLastUpdated) || "لم يتم إدخال خطة علاج بعد";
+          treatmentInput.value = currentPatientData.treatment || "";
+          treatmentLastUpdated.textContent = formatFirestoreTimestamp(currentPatientData.treatmentLastUpdated) || "لم يتم إدخال خطة علاج بعد";
+          renderAuditLog(treatmentAuditLog, currentPatientData.treatmentHistory || []);
 
           // Populate Follow-up Tab
-          renderFollowups(data.followups || []);
+          renderFollowups(currentPatientData.followups || []);
 
           // Populate Diet Tab
-          dietTextInput.value = data.dietText || "";
-          dietTextLastUpdated.textContent = formatFirestoreTimestamp(data.dietTextLastUpdated) || "لم يتم إدخال نظام مكتوب بعد";
-          if (data.dietFileUrl && data.dietFileName) {
-              uploadedFileName.textContent = data.dietFileName;
-              viewFileBtn.href = data.dietFileUrl;
-              uploadedFileContainer.classList.remove("hidden");
-          } else {
-              uploadedFileContainer.classList.add("hidden");
-          }
+          dietTextInput.value = currentPatientData.dietText || "";
+          dietTextLastUpdated.textContent = formatFirestoreTimestamp(currentPatientData.dietTextLastUpdated) || "لم يتم إدخال نظام مكتوب بعد";
+          renderAssignedDietPlans(currentPatientData.assignedDietPlans || []);
+
+
+          // Populate General Attachments Tab
+          renderGeneralAttachments(currentPatientData.attachments || []);
 
         } else {
           showToast("بيانات المريض غير موجودة.", "error");
@@ -398,32 +606,146 @@
 
     // --- Save Logic for various tabs ---
 
-    // Save Diagnosis
-    saveDiagnosisBtn.addEventListener("click", async () => {
+    // Edit/Save Important Notes
+    editImportantNotesBtn.addEventListener("click", async () => {
+        const newNotes = prompt("أدخل الملاحظات الهامة:", currentPatientData.importantNotes || "");
+        if (newNotes !== null) { // If user didn't cancel
+            try {
+                await updateDoc(patientRef, {
+                    importantNotes: newNotes.trim(),
+                    lastUpdated: serverTimestamp()
+                });
+                showToast("تم حفظ الملاحظات الهامة بنجاح!", "success");
+                loadPatientData(); // Reload to update UI
+            } catch (error) {
+                console.error("Error saving important notes:", error);
+                showToast("فشل حفظ الملاحظات الهامة.", "error");
+            }
+        }
+    });
+
+
+    // Save Summary Target Weight
+    saveTargetWeightBtn.addEventListener("click", async () => {
+        const target = parseFloat(targetWeightInput.value);
+        if (isNaN(target) || target <= 0) {
+            showToast("الرجاء إدخال وزن مستهدف صحيح.", "error");
+            return;
+        }
         try {
             await updateDoc(patientRef, {
-                diagnosis: diagnosisInput.value,
+                targetWeight: target,
+                lastUpdated: serverTimestamp()
+            });
+            showToast("تم حفظ الوزن المستهدف بنجاح!", "success");
+            loadPatientData();
+        } catch (error) {
+            console.error("Error saving target weight:", error);
+            showToast("فشل حفظ الوزن المستهدف.", "error");
+        }
+    });
+
+    // Save Basic Patient Data (Editable Tab)
+    savePatientDataBtn.addEventListener("click", async () => {
+        const updatedData = {
+            name: editPatientName.value.trim(),
+            phone: editPatientPhone.value.trim(),
+            age: Number(editPatientAge.value),
+            weight: Number(editPatientWeight.value),
+            height: Number(editPatientHeight.value), // Ensure height is updated
+            notes: editPatientNotes.value.trim(),
+            lastUpdated: serverTimestamp()
+        };
+
+        // Validate required fields for basic data
+        if (!updatedData.name || !updatedData.phone || isNaN(updatedData.age) || isNaN(updatedData.weight)) {
+            showToast("الرجاء ملء حقول الاسم والهاتف والعمر والوزن بشكل صحيح.", "error");
+            return;
+        }
+
+        try {
+            await updateDoc(patientRef, updatedData);
+            showToast("تم تحديث بيانات المريض بنجاح!", "success");
+            loadPatientData(); // Reload to update all UI elements
+        } catch (error) {
+            console.error("Error updating patient data:", error);
+            showToast("فشل تحديث بيانات المريض.", "error");
+        }
+    });
+
+
+    // Save Diagnosis
+    saveDiagnosisBtn.addEventListener("click", async () => {
+        const newDiagnosis = diagnosisInput.value.trim();
+        if (newDiagnosis === currentPatientData.diagnosis) {
+            showToast("لم يتم إجراء أي تغييرات في التشخيص.", "info");
+            return;
+        }
+
+        const auditEntry = {
+            content: newDiagnosis,
+            timestamp: serverTimestamp(),
+            // You can add user info here if authentication is implemented
+        };
+
+        try {
+            await updateDoc(patientRef, {
+                diagnosis: newDiagnosis,
                 diagnosisLastUpdated: serverTimestamp(),
-                lastUpdated: serverTimestamp() // Update main lastUpdated too
+                diagnosisHistory: arrayUnion(auditEntry), // Add to audit log
+                lastUpdated: serverTimestamp()
             });
             showToast("تم حفظ التشخيص بنجاح!", "success");
-            loadPatientData(); // Reload to update timestamps
+            loadPatientData();
         } catch (error) {
             console.error("Error saving diagnosis:", error);
             showToast("فشل حفظ التشخيص.", "error");
         }
     });
 
+    // Render Audit Log
+    function renderAuditLog(element, history) {
+        element.innerHTML = "";
+        if (!history || history.length === 0) {
+            element.innerHTML = '<li>لا يوجد سجل تعديلات بعد.</li>';
+            return;
+        }
+        // Sort history by timestamp (most recent first)
+        const sortedHistory = [...history].sort((a, b) => {
+            const dateA = a.timestamp ? a.timestamp.toDate() : new Date(); // Fallback if timestamp missing
+            const dateB = b.timestamp ? b.timestamp.toDate() : new Date();
+            return dateB - dateA;
+        });
+
+        sortedHistory.forEach(entry => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>${formatFirestoreTimestamp(entry.timestamp)}:</strong> ${entry.content.substring(0, 100)}...`; // Show first 100 chars
+            element.appendChild(li);
+        });
+    }
+
     // Save Treatment
     saveTreatmentBtn.addEventListener("click", async () => {
+        const newTreatment = treatmentInput.value.trim();
+        if (newTreatment === currentPatientData.treatment) {
+            showToast("لم يتم إجراء أي تغييرات في خطة العلاج.", "info");
+            return;
+        }
+
+        const auditEntry = {
+            content: newTreatment,
+            timestamp: serverTimestamp(),
+        };
+
         try {
             await updateDoc(patientRef, {
-                treatment: treatmentInput.value,
+                treatment: newTreatment,
                 treatmentLastUpdated: serverTimestamp(),
+                treatmentHistory: arrayUnion(auditEntry), // Add to audit log
                 lastUpdated: serverTimestamp()
             });
             showToast("تم حفظ خطة العلاج بنجاح!", "success");
-            loadPatientData(); // Reload to update timestamps
+            loadPatientData();
         } catch (error) {
             console.error("Error saving treatment:", error);
             showToast("فشل حفظ خطة العلاج.", "error");
@@ -442,7 +764,7 @@
         }
 
         const newFollowup = {
-            date: date, // Store as string for simplicity
+            date: date,
             weight: Number(weight),
             notes: notes,
             createdAt: serverTimestamp()
@@ -451,6 +773,7 @@
         try {
             await updateDoc(patientRef, {
                 followups: arrayUnion(newFollowup),
+                weight: Number(weight), // Update main patient weight with the latest follow-up weight
                 lastUpdated: serverTimestamp()
             });
             showToast("تم إضافة المتابعة بنجاح!", "success");
@@ -458,7 +781,7 @@
             followupDateInput.value = '';
             followupWeightInput.value = '';
             followupNotesInput.value = '';
-            loadPatientData(); // Reload all data to update followups table
+            loadPatientData(); // Reload all data to update followups table and summary
         } catch (error) {
             console.error("Error adding followup:", error);
             showToast("فشل إضافة المتابعة.", "error");
@@ -467,36 +790,75 @@
 
     // Render Follow-ups Table
     function renderFollowups(followups) {
+        followupTableBody.innerHTML = "";
         if (!followups || followups.length === 0) {
-            followupTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 p-4">لا توجد متابعات مسجلة بعد.</td></tr>';
+            followupTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 p-4">لا توجد متابعات مسجلة بعد.</td></tr>';
             return;
         }
-        followupTableBody.innerHTML = "";
-        // Sort followups by date (most recent first)
         const sortedFollowups = [...followups].sort((a, b) => {
             const dateA = a.createdAt ? a.createdAt.toDate() : new Date(a.date);
             const dateB = b.createdAt ? b.createdAt.toDate() : new Date(b.date);
-            return dateB - dateA; // Descending order
+            return dateB - dateA;
         });
 
-        sortedFollowups.forEach(f => {
+        sortedFollowups.forEach((f, index) => {
             const row = `
-                <tr class="hover:bg-pink-50">
-                    <td class="p-3 border-b border-gray-200">${formatFirestoreTimestamp(f.createdAt) || f.date}</td>
-                    <td class="p-3 border-b border-gray-200">${f.weight} كجم</td>
-                    <td class="p-3 border-b border-gray-200">${f.notes || 'لا يوجد'}</td>
-                </tr>
-            `;
+              <tr>
+                <td>${formatFirestoreTimestamp(f.createdAt) || f.date}</td>
+                <td>${f.weight} كجم</td>
+                <td>${f.notes || 'لا يوجد'}</td>
+                <td>
+                  <button data-index="${index}" class="delete-followup-btn text-red-600 hover:text-red-800 text-xs font-semibold">حذف</button>
+                </td>
+              </tr>`;
             followupTableBody.innerHTML += row;
+        });
+
+        // Add event listeners for delete buttons
+        document.querySelectorAll('.delete-followup-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const indexToDelete = parseInt(e.target.dataset.index);
+                const confirmDelete = confirm("هل أنت متأكد من حذف هذه المتابعة؟");
+                if (confirmDelete) {
+                    try {
+                        // Get the current followups array
+                        const patientDoc = await getDoc(patientRef);
+                        const currentFollowups = patientDoc.data().followups || [];
+                        const sortedCurrentFollowups = [...currentFollowups].sort((a, b) => {
+                            const dateA = a.createdAt ? a.createdAt.toDate() : new Date(a.date);
+                            const dateB = b.createdAt ? b.toDate() : new Date(b.date);
+                            return dateB - dateA;
+                        });
+                        
+                        const followupToRemove = sortedCurrentFollowups[indexToDelete];
+
+                        await updateDoc(patientRef, {
+                            followups: arrayRemove(followupToRemove),
+                            lastUpdated: serverTimestamp()
+                        });
+                        showToast("تم حذف المتابعة بنجاح!", "success");
+                        loadPatientData();
+                    } catch (error) {
+                        console.error("Error deleting followup:", error);
+                        showToast("فشل حذف المتابعة.", "error");
+                    }
+                }
+            });
         });
     }
 
     // Save Diet Text
     saveDietTextBtn.addEventListener("click", async () => {
         try {
+            const newDietTextEntry = {
+                type: "text",
+                dietText: dietTextInput.value.trim(),
+                assignedDate: serverTimestamp(),
+            };
             await updateDoc(patientRef, {
-                dietText: dietTextInput.value,
-                dietTextLastUpdated: serverTimestamp(),
+                dietText: dietTextInput.value.trim(), // Keep this for easy access to current text
+                dietTextLastUpdated: serverTimestamp(), // Keep this for easy access to current text update time
+                assignedDietPlans: arrayUnion(newDietTextEntry), // Add to history
                 lastUpdated: serverTimestamp()
             });
             showToast("تم حفظ النظام الغذائي المكتوب بنجاح!", "success");
@@ -507,7 +869,62 @@
         }
     });
 
-    // Upload Diet File
+    // Load Diet Templates for Dropdown
+    async function loadDietTemplatesForDropdown() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "dietPlanTemplates"));
+            dietTemplateSelect.innerHTML = '<option value="">لا يوجد قالب محدد</option>'; // Reset options
+            querySnapshot.forEach(doc => {
+                const template = doc.data();
+                const option = document.createElement("option");
+                option.value = doc.id;
+                option.textContent = template.name;
+                dietTemplateSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Error loading diet templates:", error);
+            showToast("فشل تحميل قوالب النظام الغذائي.", "error");
+        }
+    }
+
+    // Assign Diet Template to Patient
+    assignDietTemplateBtn.addEventListener("click", async () => {
+        const selectedTemplateId = dietTemplateSelect.value;
+        if (!selectedTemplateId) {
+            showToast("الرجاء اختيار قالب لتعيينه.", "info");
+            return;
+        }
+
+        try {
+            const templateDoc = await getDoc(doc(db, "dietPlanTemplates", selectedTemplateId));
+            if (!templateDoc.exists()) {
+                showToast("القالب المختار غير موجود.", "error");
+                return;
+            }
+            const templateData = templateDoc.data();
+
+            const assignedPlan = {
+                type: "template",
+                templateId: selectedTemplateId,
+                name: templateData.name,
+                fileUrl: templateData.fileUrl,
+                fileName: templateData.fileName,
+                assignedDate: serverTimestamp(),
+            };
+
+            await updateDoc(patientRef, {
+                assignedDietPlans: arrayUnion(assignedPlan),
+                lastUpdated: serverTimestamp()
+            });
+            showToast(`تم تعيين قالب "${templateData.name}" بنجاح!`, "success");
+            loadPatientData(); // Reload to update assigned plans table
+        } catch (error) {
+            console.error("Error assigning diet template:", error);
+            showToast("فشل تعيين قالب النظام الغذائي.", "error");
+        }
+    });
+
+    // Upload Custom Diet File
     uploadDietFileBtn.addEventListener("click", async () => {
         const file = dietFileInput.files[0];
         if (!file) {
@@ -521,87 +938,261 @@
             return;
         }
 
-        fileUploadStatus.textContent = "جاري رفع الملف...";
-        fileUploadStatus.classList.remove("hidden", "text-red-500", "text-green-500");
-        fileUploadStatus.classList.add("text-blue-500");
+        dietFileUploadStatus.textContent = "جاري رفع الملف...";
+        dietFileUploadStatus.classList.remove("hidden", "text-red-500", "text-green-500");
+        dietFileUploadStatus.classList.add("text-blue-500");
 
-        const filePath = `diet_plans/${patientId}/${file.name}`;
+        const filePath = `diet_plans/${patientId}/${Date.now()}_${file.name}`; // Unique filename
         const storageRef = ref(storage, filePath);
 
         try {
-            // If there's an existing file, delete it first to avoid orphans
-            const patientDoc = await getDoc(patientRef);
-            if (patientDoc.exists() && patientDoc.data().dietFileRef) {
-                const oldFileRef = ref(storage, patientDoc.data().dietFileRef);
-                try {
-                    await deleteObject(oldFileRef);
-                    console.log("Old file deleted successfully.");
-                } catch (deleteError) {
-                    console.warn("Could not delete old file (it might not exist or permissions issue):", deleteError);
-                }
-            }
-
             const snapshot = await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(snapshot.ref);
 
+            const assignedPlan = {
+                type: "custom",
+                fileUrl: downloadURL,
+                fileName: file.name,
+                fileRef: filePath, // Store the full path for deletion
+                assignedDate: serverTimestamp(),
+            };
+
             await updateDoc(patientRef, {
-                dietFileUrl: downloadURL,
-                dietFileName: file.name,
-                dietFileRef: filePath, // Store the full path for easier deletion later
+                assignedDietPlans: arrayUnion(assignedPlan),
                 lastUpdated: serverTimestamp()
             });
 
             showToast("تم رفع الملف بنجاح!", "success");
-            fileUploadStatus.textContent = "تم الرفع بنجاح.";
-            fileUploadStatus.classList.remove("text-blue-500");
-            fileUploadStatus.classList.add("text-green-500");
+            dietFileUploadStatus.textContent = "تم الرفع بنجاح.";
+            dietFileUploadStatus.classList.remove("text-blue-500");
+            dietFileUploadStatus.classList.add("text-green-500");
             dietFileInput.value = ''; // Clear the file input
-            loadPatientData(); // Reload to show new file details
+            loadPatientData();
         } catch (error) {
             console.error("Error uploading file:", error);
             showToast("فشل رفع الملف.", "error");
-            fileUploadStatus.textContent = `فشل الرفع: ${error.message}`;
-            fileUploadStatus.classList.remove("text-blue-500");
-            fileUploadStatus.classList.add("text-red-500");
+            dietFileUploadStatus.textContent = `فشل الرفع: ${error.message}`;
+            dietFileUploadStatus.classList.remove("text-blue-500");
+            dietFileUploadStatus.classList.add("text-red-500");
         }
     });
 
-    // Delete Diet File
-    deleteFileBtn.addEventListener("click", async () => {
-        const confirmDelete = confirm("هل أنت متأكد أنك تريد حذف هذا الملف؟");
-        if (!confirmDelete) return;
+    // Render Assigned Diet Plans Table
+    function renderAssignedDietPlans(plans) {
+        assignedDietPlansTableBody.innerHTML = "";
+        if (!plans || plans.length === 0) {
+            assignedDietPlansTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 p-4">لا توجد أنظمة غذائية معينة.</td></tr>';
+            return;
+        }
+        // Sort plans by assignedDate (most recent first)
+        const sortedPlans = [...plans].sort((a, b) => {
+            const dateA = a.assignedDate ? a.assignedDate.toDate() : new Date();
+            const dateB = b.assignedDate ? b.assignedDate.toDate() : new Date();
+            return dateB - dateA;
+        });
+
+        sortedPlans.forEach((plan, index) => {
+            let contentDisplay = '';
+            let viewButton = '';
+            let deleteButton = '';
+
+            if (plan.type === 'text') {
+                contentDisplay = plan.dietText ? plan.dietText.substring(0, 50) + '...' : 'نص مكتوب';
+            } else if (plan.type === 'custom' || plan.type === 'template') {
+                contentDisplay = plan.fileName || 'ملف غير معروف';
+                if (plan.fileUrl) {
+                    viewButton = `<a href="${plan.fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded-md text-xs font-semibold ml-1"><i class="fa-solid fa-eye"></i> عرض</a>`;
+                }
+                if (plan.type === 'custom' && plan.fileRef) { // Only allow deleting custom uploaded files
+                    deleteButton = `<button data-file-ref="${plan.fileRef}" data-plan-index="${index}" class="delete-diet-file-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded-md text-xs font-semibold ml-1"><i class="fa-solid fa-trash"></i> حذف</button>`;
+                }
+            }
+
+            const row = `
+              <tr class="hover:bg-pink-50">
+                <td class="p-3 border-b border-gray-200">${formatFirestoreTimestamp(plan.assignedDate)}</td>
+                <td class="p-3 border-b border-gray-200">${plan.type === 'text' ? 'نص' : (plan.type === 'custom' ? 'ملف مخصص' : 'قالب')}</td>
+                <td class="p-3 border-b border-gray-200">${contentDisplay}</td>
+                <td class="p-3 border-b border-gray-200">
+                  ${viewButton}
+                  ${deleteButton}
+                </td>
+              </tr>`;
+            assignedDietPlansTableBody.innerHTML += row;
+        });
+
+        // Add event listeners for delete diet file buttons
+        document.querySelectorAll('.delete-diet-file-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const fileRefPath = e.target.dataset.fileRef;
+                const planIndex = parseInt(e.target.dataset.planIndex); // Get index from rendered list, not original array
+                const confirmDelete = confirm("هل أنت متأكد أنك تريد حذف هذا الملف من Firebase Storage؟ سيتم إزالته من سجل المريض.");
+                if (!confirmDelete) return;
+
+                try {
+                    if (fileRefPath) {
+                        const fileToDeleteRef = ref(storage, fileRefPath);
+                        await deleteObject(fileToDeleteRef);
+                        showToast("تم حذف الملف من التخزين السحابي.", "success");
+                    }
+
+                    // Remove the plan entry from assignedDietPlans array
+                    const patientDoc = await getDoc(patientRef);
+                    const currentAssignedPlans = patientDoc.data().assignedDietPlans || [];
+                    
+                    // Re-sort the current plans to match rendering order to find the exact item to remove
+                    const sortedCurrentPlans = [...currentAssignedPlans].sort((a, b) => {
+                        const dateA = a.assignedDate ? a.assignedDate.toDate() : new Date();
+                        const dateB = b.assignedDate ? b.assignedDate.toDate() : new Date();
+                        return dateB - dateA;
+                    });
+                    
+                    const planToRemove = sortedCurrentPlans[planIndex];
+
+                    if (planToRemove) {
+                        await updateDoc(patientRef, {
+                            assignedDietPlans: arrayRemove(planToRemove),
+                            lastUpdated: serverTimestamp()
+                        });
+                        showToast("تم حذف سجل النظام الغذائي بنجاح!", "success");
+                        loadPatientData(); // Reload to update UI
+                    } else {
+                        showToast("لم يتم العثور على سجل النظام الغذائي المراد حذفه.", "error");
+                    }
+                } catch (error) {
+                    console.error("Error deleting diet plan file:", error);
+                    showToast("فشل حذف ملف النظام الغذائي.", "error");
+                }
+            });
+        });
+    }
+
+
+    // Upload General Attachment
+    uploadGeneralAttachmentBtn.addEventListener("click", async () => {
+        const file = generalAttachmentInput.files[0];
+        const description = attachmentDescription.value.trim();
+
+        if (!file) {
+            showToast("الرجاء اختيار ملف لرفعه.", "info");
+            return;
+        }
+
+        attachmentUploadStatus.textContent = "جاري رفع الملف...";
+        attachmentUploadStatus.classList.remove("hidden", "text-red-500", "text-green-500");
+        attachmentUploadStatus.classList.add("text-blue-500");
+
+        const filePath = `attachments/${patientId}/${Date.now()}_${file.name}`; // Unique filename
+        const storageRef = ref(storage, filePath);
 
         try {
-            const patientDoc = await getDoc(patientRef);
-            const data = patientDoc.data();
-            const fileRefPath = data.dietFileRef; // Use the stored path
+            const snapshot = await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(snapshot.ref);
 
-            if (fileRefPath) {
-                const fileToDeleteRef = ref(storage, fileRefPath);
-                await deleteObject(fileToDeleteRef);
+            const newAttachment = {
+                fileUrl: downloadURL,
+                fileName: file.name,
+                fileRef: filePath,
+                description: description,
+                uploadedAt: serverTimestamp(),
+            };
 
-                await updateDoc(patientRef, {
-                    dietFileUrl: null,
-                    dietFileName: null,
-                    dietFileRef: null,
-                    lastUpdated: serverTimestamp()
-                });
-                showToast("تم حذف الملف بنجاح!", "success");
-                loadPatientData(); // Reload to update UI
-            } else {
-                showToast("لا يوجد ملف لحذفه.", "info");
-            }
+            await updateDoc(patientRef, {
+                attachments: arrayUnion(newAttachment),
+                lastUpdated: serverTimestamp()
+            });
+
+            showToast("تم رفع الملف بنجاح!", "success");
+            attachmentUploadStatus.textContent = "تم الرفع بنجاح.";
+            attachmentUploadStatus.classList.remove("text-blue-500");
+            attachmentUploadStatus.classList.add("text-green-500");
+            generalAttachmentInput.value = ''; // Clear input
+            attachmentDescription.value = ''; // Clear description
+            loadPatientData();
         } catch (error) {
-            console.error("Error deleting file:", error);
-            showToast("فشل حذف الملف.", "error");
+            console.error("Error uploading general attachment:", error);
+            showToast("فشل رفع الملف.", "error");
+            attachmentUploadStatus.textContent = `فشل الرفع: ${error.message}`;
+            attachmentUploadStatus.classList.remove("text-blue-500");
+            attachmentUploadStatus.classList.add("text-red-500");
         }
     });
+
+    // Render General Attachments Table
+    function renderGeneralAttachments(attachments) {
+        generalAttachmentsTableBody.innerHTML = "";
+        if (!attachments || attachments.length === 0) {
+            generalAttachmentsTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500 p-4">لا توجد ملفات مرفقة.</td></tr>';
+            return;
+        }
+
+        const sortedAttachments = [...attachments].sort((a, b) => {
+            const dateA = a.uploadedAt ? a.uploadedAt.toDate() : new Date();
+            const dateB = b.uploadedAt ? b.uploadedAt.toDate() : new Date();
+            return dateB - dateA;
+        });
+
+        sortedAttachments.forEach((attachment, index) => {
+            const row = `
+              <tr class="hover:bg-pink-50">
+                <td class="p-3 border-b border-gray-200">${attachment.fileName}</td>
+                <td class="p-3 border-b border-gray-200">${attachment.description || 'لا يوجد وصف'}</td>
+                <td class="p-3 border-b border-gray-200">${formatFirestoreTimestamp(attachment.uploadedAt)}</td>
+                <td class="p-3 border-b border-gray-200">
+                  <a href="${attachment.fileUrl}" target="_blank" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded-md text-xs font-semibold ml-1">عرض</a>
+                  <button data-file-ref="${attachment.fileRef}" data-attachment-index="${index}" class="delete-attachment-btn bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded-md text-xs font-semibold ml-1">حذف</button>
+                </td>
+              </tr>`;
+            generalAttachmentsTableBody.innerHTML += row;
+        });
+
+        // Add event listeners for delete attachment buttons
+        document.querySelectorAll('.delete-attachment-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const fileRefPath = e.target.dataset.fileRef;
+                const attachmentIndex = parseInt(e.target.dataset.attachmentIndex);
+                const confirmDelete = confirm("هل أنت متأكد من حذف هذا الملف المرفق؟");
+                if (!confirmDelete) return;
+
+                try {
+                    if (fileRefPath) {
+                        const fileToDeleteRef = ref(storage, fileRefPath);
+                        await deleteObject(fileToDeleteRef);
+                        showToast("تم حذف الملف من التخزين السحابي.", "success");
+                    }
+
+                    const patientDoc = await getDoc(patientRef);
+                    const currentAttachments = patientDoc.data().attachments || [];
+                    const sortedCurrentAttachments = [...currentAttachments].sort((a, b) => {
+                        const dateA = a.uploadedAt ? a.uploadedAt.toDate() : new Date();
+                        const dateB = b.uploadedAt ? b.uploadedAt.toDate() : new Date();
+                        return dateB - dateA;
+                    });
+                    
+                    const attachmentToRemove = sortedCurrentAttachments[attachmentIndex];
+
+                    if (attachmentToRemove) {
+                        await updateDoc(patientRef, {
+                            attachments: arrayRemove(attachmentToRemove),
+                            lastUpdated: serverTimestamp()
+                        });
+                        showToast("تم حذف سجل الملف المرفق بنجاح!", "success");
+                        loadPatientData();
+                    } else {
+                        showToast("لم يتم العثور على سجل الملف المرفق المراد حذفه.", "error");
+                    }
+                } catch (error) {
+                    console.error("Error deleting general attachment:", error);
+                    showToast("فشل حذف الملف المرفق.", "error");
+                }
+            });
+        });
+    }
 
 
     // --- Initial Load ---
-    // Show the password modal on page load
     passwordModal.classList.remove("hidden");
-    passwordInput.focus(); // Focus on the password input immediately
+    passwordInput.focus();
   </script>
 
 </body>

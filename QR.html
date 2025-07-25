@@ -142,9 +142,8 @@
     </div>
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script type="module">
-        import { Html5QrcodeScanner } from "https://unpkg.com/html5-qrcode@2.3.8/esm/index.min.js";
-
+    
+    <script>
         const qrReaderId = "qr-reader";
         const qrScanResultSpan = document.querySelector("#qr-scan-result span");
         const qrScanResultP = document.getElementById("qr-scan-result");
@@ -207,13 +206,14 @@
 
             try {
                 // محاولة الحصول على تدفق الفيديو (طلب الإذن)
+                // هذا هو الجزء الذي يثير طلب الأذونات
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 stream.getTracks().forEach(track => track.stop()); // إيقاف التدفق فورًا بعد الحصول على الإذن
 
                 displayStatusMessage('تم منح إذن الكاميرا. جاري بدء المسح...', 'info');
                 document.getElementById(qrReaderId).style.display = "block"; // إظهار منطقة الماسح
 
-                // تهيئة وبدء الماسح
+                // تهيئة وبدء الماسح (Html5QrcodeScanner أصبح متاحاً عالمياً بعد استيراده)
                 html5QrCodeScanner = new Html5QrcodeScanner(
                     qrReaderId,
                     { 
@@ -224,6 +224,7 @@
                     /* verbose= */ false
                 );
 
+                // render() بترجع Promise بيتم حلها عند بدء المسح بنجاح
                 await html5QrCodeScanner.render(onScanSuccess, onScanFailure);
                 hideStatusMessage(); // إخفاء رسالة الحالة بعد بدء المسح بنجاح
 
@@ -246,7 +247,7 @@
                 errorMessage = 'لا يمكن قراءة مصدر الفيديو. قد تكون الكاميرا قيد الاستخدام بواسطة تطبيق آخر، أو هناك مشكلة في برامج التشغيل.';
             } else if (error.name === "OverconstrainedError") {
                 errorMessage = 'لا يمكن تلبية متطلبات الكاميرا المحددة. حاول تحديث المتصفح أو التأكد من أن الكاميرا تعمل بشكل صحيح.';
-            } else if (error.message.includes("Only secure origins are allowed")) {
+            } else if (error.message && error.message.includes("Only secure origins are allowed")) {
                 errorMessage = 'يتطلب الوصول إلى الكاميرا أن تكون الصفحة تعمل على بروتوكول آمن (HTTPS) أو على localhost.';
             }
             displayStatusMessage(errorMessage, 'error');

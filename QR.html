@@ -3,434 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إضافة منتج جديد</title>
+    <title>مسح رمز QR للدواء - نظام جرد الصيدلية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #28a745; /* أخضر */
+            --secondary-color: #007bff; /* أزرق */
+            --background-color: #f8f9fa; /* لون خلفية فاتح */
+            --card-background: #ffffff; /* خلفية البطاقة */
+            --text-color: #343a40; /* لون النص الأساسي */
+            --border-color: #e2e6ea;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--background-color);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
+            padding: 20px;
             direction: rtl; /* للعربية */
             text-align: right;
+            color: var(--text-color);
         }
+
         .container {
-            background-color: #fff;
+            background-color: var(--card-background);
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            max-width: 90%;
-        }
-        h2 {
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px; /* زيادة العرض قليلاً */
             text-align: center;
-            color: #333;
+            box-sizing: border-box; /* لضمان أن البادينغ لا يزيد العرض الكلي */
+        }
+
+        h1 {
+            color: var(--primary-color);
             margin-bottom: 25px;
+            font-size: 2em;
+            font-weight: 700;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        textarea {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box; /* عشان ال padding ما يزودش العرض */
-        }
-        .qr-scanner-section {
-            text-align: center;
+
+        p {
+            color: var(--text-color);
             margin-bottom: 20px;
+            line-height: 1.6;
         }
-        #qr-video {
+
+        #qr-reader {
             width: 100%;
-            max-width: 300px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-top: 10px;
+            max-width: 400px; /* زيادة عرض الماسح */
+            margin: 0 auto 25px auto;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden; /* لمنع أي تجاوز بصري */
         }
-        .error-message {
-            color: red;
-            font-size: 0.9em;
-            margin-top: 5px;
+
+        /* إخفاء لوحة التحكم الافتراضية للماسح إذا لم تكن مطلوبة */
+        #qr-reader__dashboard {
+            display: none !important;
         }
-        button {
-            background-color: #28a745;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 18px;
-            width: 100%;
+
+        #qr-scan-result {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--secondary-color);
             margin-top: 20px;
+            padding: 10px;
+            background-color: #e9f7ee; /* خلفية خفيفة للنتيجة */
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
         }
-        button:hover {
-            background-color: #218838;
-        }
-        #statusMessage {
+
+        .message-box {
             margin-top: 20px;
-            text-align: center;
-            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
         }
-        .success {
-            color: green;
+
+        .message-box.error {
+            background-color: #f8d7da;
+            color: var(--error-color);
+            border: 1px solid #f5c6cb;
         }
-        .error {
-            color: red;
+
+        .message-box.info {
+            background-color: #e2e6ea;
+            color: #6c757d;
+            border: 1px solid #d6d8db;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>إضافة منتج جديد</h2>
+        <h1>مسح رمز QR للدواء</h1>
+        <p>يرجى توجيه كاميرا جهازك نحو رمز QR أو الباركود الموجود على علبة الدواء لتسجيله في المخزون.</p>
 
-        <div class="qr-scanner-section">
-            <button id="startScannerBtn">بدء مسح الكيو آر / الباركود</button>
-            <video id="qr-video" width="300" height="200" style="display:none;"></video>
-            <p id="qr-scan-result" style="font-weight: bold; color: #007bff; margin-top: 10px;"></p>
+        <div id="qr-reader"></div>
+        
+        <p id="qr-scan-result" style="display: none;">الرمز الممسوح: <span></span></p>
+        
+        <div id="status-message" class="message-box info" style="display: block;">
+            جاري تهيئة الكاميرا... يرجى السماح بالوصول.
         </div>
-
-        <form id="productForm">
-            <div class="form-group">
-                <label for="barcode">الباركود / الكيو آر:</label>
-                <input type="text" id="barcode" readonly required>
-                <div id="barcodeError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label for="productName">اسم المنتج:</label>
-                <input type="text" id="productName" required>
-                <div id="productNameError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label for="scientificName">الاسم العلمي (اختياري):</label>
-                <input type="text" id="scientificName">
-            </div>
-            <div class="form-group">
-                <label for="quantity">الكمية:</label>
-                <input type="number" id="quantity" min="1" required>
-                <div id="quantityError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label for="purchasePrice">سعر الشراء:</label>
-                <input type="number" id="purchasePrice" step="0.01" required>
-                <div id="purchasePriceError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label for="salePrice">سعر البيع:</label>
-                <input type="number" id="salePrice" step="0.01" required>
-                <div id="salePriceError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label for="expiryDate">تاريخ الانتهاء:</label>
-                <input type="date" id="expiryDate">
-                <div id="expiryDateError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label for="supplier">المورد (اختياري):</label>
-                <input type="text" id="supplier">
-            </div>
-            <div class="form-group">
-                <label for="description">وصف المنتج (اختياري):</label>
-                <textarea id="description" rows="3"></textarea>
-            </div>
-            <button type="submit">إضافة المنتج</button>
-        </form>
-        <p id="statusMessage"></p>
     </div>
 
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script type="module">
-        // استيراد الدوال الأساسية من Firebase SDK v9+ Modular
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, runTransaction, FieldValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-        // إذا كنت تستخدم Authentication أو Analytics، استوردهم أيضًا
-        // import { getAuth } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
-        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-analytics.js";
+        import { Html5QrcodeScanner } from "https://unpkg.com/html5-qrcode@2.3.8/esm/index.min.js";
 
-        // Firebase Configuration الخاص بك
-        const firebaseConfig = {
-            apiKey: "AIzaSyC5ls-rPdJ65x5BoMGwAOpdcPtD585C2ys",
-            authDomain: "pharmacy-inventory-bf04a.firebaseapp.com",
-            projectId: "pharmacy-inventory-bf04a",
-            storageBucket: "pharmacy-inventory-bf04a.firebasestorage.app",
-            messagingSenderId: "937788650384",
-            appId: "1:937788650384:web:6451225d00e648f3a0b915",
-            measurementId: "G-ZGC9EQ55SL"
-        };
+        const qrReaderId = "qr-reader";
+        const qrScanResultSpan = document.querySelector("#qr-scan-result span");
+        const qrScanResultP = document.getElementById("qr-scan-result");
+        const statusMessageDiv = document.getElementById("status-message");
 
-        // تهيئة Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        // const auth = getAuth(app); // لو هتستخدم Authentication
-        // const analytics = getAnalytics(app); // لو هتستخدم Analytics
+        // تهيئة الماسح الضوئي
+        const html5QrCodeScanner = new Html5QrcodeScanner(
+            qrReaderId,
+            { 
+                fps: 10,                 // عدد الإطارات في الثانية
+                qrbox: { width: 250, height: 250 }, // حجم مربع المسح
+                rememberLastUsedCamera: true, // تذكر الكاميرا المستخدمة آخر مرة
+                // Other options for advanced camera selection
+                // disableFlip: false, // يمكن تفعيلها لمنع عكس الصورة إذا كانت الكاميرا الأمامية هي الافتراضية
+            },
+            /* verbose= */ false // لا تعرض رسائل تفصيلية في الكونسول
+        );
 
-        // ----------------------------------------------------
-        // باقي كود JavaScript الخاص بالصفحة والماسح الضوئي
-        // ----------------------------------------------------
+        // دالة يتم استدعاؤها عند المسح الناجح
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`QR code scanned: ${decodedText}`, decodedResult);
+            qrScanResultSpan.innerText = decodedText;
+            qrScanResultP.style.display = "block"; // إظهار النتيجة
 
-        // 2. العناصر من الـ HTML
-        const startScannerBtn = document.getElementById('startScannerBtn');
-        const qrVideo = document.getElementById('qr-video');
-        const qrScanResult = document.getElementById('qr-scan-result');
-        const productForm = document.getElementById('productForm');
-        const barcodeInput = document.getElementById('barcode');
-        const productNameInput = document.getElementById('productName');
-        const quantityInput = document.getElementById('quantity');
-        const purchasePriceInput = document.getElementById('purchasePrice');
-        const salePriceInput = document.getElementById('salePrice');
-        const expiryDateInput = document.getElementById('expiryDate');
-        const statusMessage = document.getElementById('statusMessage');
-
-        // حقول رسائل الخطأ
-        const barcodeError = document.getElementById('barcodeError');
-        const productNameError = document.getElementById('productNameError');
-        const quantityError = document.getElementById('quantityError');
-        const purchasePriceError = document.getElementById('purchasePriceError');
-        const salePriceError = document.getElementById('salePriceError');
-        const expiryDateError = document.getElementById('expiryDateError');
-
-        let html5QrCode; // لتهيئة الـ scanner
-
-        // 3. وظيفة بدء تشغيل الماسح الضوئي
-        startScannerBtn.addEventListener('click', () => {
-            qrVideo.style.display = 'block'; // إظهار الفيديو
-            startScannerBtn.style.display = 'none'; // إخفاء الزرار بعد الضغط
-
-            html5QrCode = new Html5Qrcode("qr-video");
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length) {
-                    // استخدام الكاميرا الخلفية لو متاحة، أو الأولى
-                    const cameraId = devices.find(device => device.kind === 'videoinput' && device.label.toLowerCase().includes('back'))?.id || devices[0].id;
-                    html5QrCode.start(
-                        cameraId,
-                        {
-                            fps: 10,    // معدل الفريمات
-                            qrbox: { width: 250, height: 250 } // حجم منطقة المسح
-                        },
-                        (decodedText, decodedResult) => {
-                            // دي الوظيفة اللي هتتنفذ لما يتم مسح كود بنجاح
-                            qrScanResult.textContent = `تم مسح: ${decodedText}`;
-                            barcodeInput.value = decodedText; // وضع الباركود في حقل الإدخال
-                            barcodeInput.disabled = true; // منع تعديل الباركود يدوياً بعد المسح
-
-                            // إيقاف الماسح بعد مسح كود واحد
-                            html5QrCode.stop().then(() => {
-                                qrVideo.style.display = 'none';
-                                startScannerBtn.style.display = 'block'; // إعادة إظهار الزرار لو عايز تمسح تاني
-                            }).catch(err => {
-                                console.error("Failed to stop scanner: ", err);
-                            });
-
-                            // البحث عن المنتج بالباركود في Firestore
-                            checkProductExistence(decodedText);
-
-                        },
-                        (errorMessage) => {
-                            // الأخطاء أو عدم العثور على كود
-                            // console.log(`QR Code no longer in sight.`, errorMessage);
-                        }
-                    ).catch(err => {
-                        console.error("Unable to start scanning: ", err);
-                        qrScanResult.textContent = "خطأ في بدء تشغيل الكاميرا. تأكد من إعطاء الصلاحية.";
-                        qrScanResult.classList.add('error');
-                    });
-                } else {
-                    qrScanResult.textContent = "لم يتم العثور على أي كاميرات.";
-                    qrScanResult.classList.add('error');
-                }
-            }).catch(err => {
-                console.error("Error getting camera devices: ", err);
-                qrScanResult.textContent = "خطأ في الوصول إلى الكاميرا. (تأكد من استخدام HTTPS)";
-                qrScanResult.classList.add('error');
+            // توقف الماسح الضوئي بعد المسح الأول لتجنب المسح المتكرر
+            html5QrCodeScanner.clear().catch(error => {
+                console.error("Failed to clear html5QrcodeScanner. Maybe it's not running.", error);
             });
-        });
+            statusMessageDiv.style.display = 'none'; // إخفاء رسالة الحالة
 
-        // 4. وظيفة التحقق من وجود المنتج في Firestore
-        async function checkProductExistence(barcode) {
-            try {
-                // استخدام doc() للحصول على مرجع المستند و getDoc() لجلب البيانات في Firebase SDK v9+ Modular
-                const productRef = doc(db, 'products', barcode); // كل باركود هيكون ID للمستند
-                const docSnap = await getDoc(productRef); // تغيير doc لـ docSnap لتجنب التكرار مع doc في transaction
-
-                if (docSnap.exists()) {
-                    // المنتج موجود
-                    const productData = docSnap.data();
-                    productNameInput.value = productData.name;
-                    productNameInput.disabled = true; // منع تعديل الاسم لو المنتج موجود
-                    document.getElementById('scientificName').value = productData.scientificName || '';
-                    purchasePriceInput.value = productData.purchasePrice;
-                    salePriceInput.value = productData.salePrice;
-                    document.getElementById('supplier').value = productData.supplier || '';
-                    document.getElementById('description').value = productData.description || '';
-
-                    // تصفير الكمية وتاريخ الصلاحية لإنهم بيتم إدخالهم لكل دفعة
-                    quantityInput.value = '';
-                    expiryDateInput.value = '';
-
-                    statusMessage.textContent = 'المنتج موجود بالفعل. أدخل الكمية وتاريخ الصلاحية الجديدة.';
-                    statusMessage.className = 'statusMessage success';
-                } else {
-                    // المنتج غير موجود، اطلب إدخال بياناته بالكامل
-                    productNameInput.value = '';
-                    productNameInput.disabled = false; // السماح بإدخال الاسم
-                    document.getElementById('scientificName').value = '';
-                    quantityInput.value = '';
-                    purchasePriceInput.value = '';
-                    salePriceInput.value = '';
-                    expiryDateInput.value = '';
-                    document.getElementById('supplier').value = '';
-                    document.getElementById('description').value = '';
-
-                    statusMessage.textContent = 'المنتج جديد. يرجى إدخال جميع التفاصيل.';
-                    statusMessage.className = 'statusMessage';
-                }
-            } catch (error) {
-                console.error("Error checking product existence: ", error);
-                statusMessage.textContent = 'خطأ أثناء التحقق من المنتج.';
-                statusMessage.className = 'statusMessage error';
-            }
+            // *******************************************************************
+            // هنا يمكنك إضافة الكود الخاص بك للتعامل مع رمز الدواء الممسوح
+            // (مثلاً: إرسال decodedText إلى قاعدة بيانات Firebase أو API)
+            // *******************************************************************
+            // مثال: يمكن إعادة توجيه المستخدم إلى صفحة الإدخال مع الباركود
+            // window.location.href = `add_product.html?barcode=${decodedText}`;
         }
 
-        // 5. وظيفة إرسال بيانات المنتج إلى Firestore
-        productForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // منع إعادة تحميل الصفحة
+        // دالة يتم استدعاؤها عند فشل المسح (ليس خطأ حرج)
+        function onScanFailure(error) {
+            // يتم استدعاء هذه الدالة بشكل متكرر عند عدم وجود QR Code في مجال الرؤية
+            // يمكنك استخدامها للتصحيح إذا لزم الأمر
+            // console.warn(`QR scan failed: ${error}`);
+        }
 
-            statusMessage.textContent = ''; // مسح الرسائل السابقة
-            statusMessage.classList.remove('success', 'error');
-            
-            // مسح رسائل الخطأ القديمة
-            barcodeError.textContent = '';
-            productNameError.textContent = '';
-            quantityError.textContent = '';
-            purchasePriceError.textContent = '';
-            salePriceError.textContent = '';
-            expiryDateError.textContent = '';
+        // دالة لمعالجة الأخطاء التي تمنع تشغيل الكاميرا
+        function handleCameraError(error) {
+            console.error("Camera access error:", error);
+            statusMessageDiv.classList.remove('info');
+            statusMessageDiv.classList.add('error');
+            statusMessageDiv.style.display = 'block';
 
-            // التحقق من صحة المدخلات
-            let isValid = true;
-            if (!barcodeInput.value) {
-                barcodeError.textContent = 'الباركود مطلوب.';
-                isValid = false;
+            if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+                statusMessageDiv.innerHTML = 'تم رفض الوصول إلى الكاميرا. يرجى السماح للموقع بالوصول إلى الكاميرا في إعدادات المتصفح.';
+            } else if (error.name === "NotFoundError") {
+                statusMessageDiv.innerHTML = 'لم يتم العثور على أي كاميرا متوفرة على جهازك.';
+            } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+                statusMessageDiv.innerHTML = 'لا يمكن قراءة مصدر الفيديو. قد تكون الكاميرا قيد الاستخدام بواسطة تطبيق آخر.';
+            } else if (error.name === "OverconstrainedError") {
+                 statusMessageDiv.innerHTML = 'لا يمكن تلبية متطلبات الكاميرا المحددة. حاول تحديث المتصفح.';
             }
-            if (!productNameInput.value) {
-                productNameError.textContent = 'اسم المنتج مطلوب.';
-                isValid = false;
+            else {
+                statusMessageDiv.innerHTML = `خطأ غير متوقع في الكاميرا: ${error.message}. يرجى المحاولة مرة أخرى.`;
             }
-            if (quantityInput.value <= 0 || isNaN(quantityInput.value)) { // إضافة isNaN للتحقق من أن المدخل رقم
-                quantityError.textContent = 'الكمية يجب أن تكون أكبر من صفر.';
-                isValid = false;
-            }
-            if (purchasePriceInput.value <= 0 || isNaN(purchasePriceInput.value)) {
-                purchasePriceError.textContent = 'سعر الشراء مطلوب ويجب أن يكون أكبر من صفر.';
-                isValid = false;
-            }
-            if (salePriceInput.value <= 0 || isNaN(salePriceInput.value)) {
-                salePriceError.textContent = 'سعر البيع مطلوب ويجب أن يكون أكبر من صفر.';
-                isValid = false;
-            }
-            if (!expiryDateInput.value) {
-                 expiryDateError.textContent = 'تاريخ الانتهاء مطلوب.';
-                 isValid = false;
-            }
+            // إخفاء منطقة الماسح إذا حدث خطأ حرج
+            document.getElementById(qrReaderId).style.display = "none";
+        }
 
+        // بدء تشغيل الماسح الضوئي عند تحميل الصفحة
+        html5QrCodeScanner.render(onScanSuccess, onScanFailure).then(() => {
+            statusMessageDiv.style.display = 'none'; // إخفاء رسالة التحميل إذا نجح
+        }).catch(handleCameraError); // Catch any errors during scanner rendering (e.g., camera access)
 
-            if (!isValid) {
-                statusMessage.textContent = 'يرجى تصحيح الأخطاء في النموذج.';
-                statusMessage.classList.add('error');
-                return;
-            }
-
-            const productBarcode = barcodeInput.value;
-            const productName = productNameInput.value;
-            const scientificName = document.getElementById('scientificName').value;
-            const quantity = parseInt(quantityInput.value);
-            const purchasePrice = parseFloat(purchasePriceInput.value);
-            const salePrice = parseFloat(salePriceInput.value);
-            const expiryDate = expiryDateInput.value; // string YYYY-MM-DD
-            const supplier = document.getElementById('supplier').value;
-            const description = document.getElementById('description').value;
-
-            try {
-                // تحديث المنتج أو إضافته
-                const productRef = doc(db, 'products', productBarcode); // استخدام doc في Firebase v9+ Modular
-
-                await runTransaction(db, async (transaction) => { // استخدام runTransaction مع الـ db أولًا
-                    const docSnap = await transaction.get(productRef); // تغيير doc لـ docSnap
-
-                    if (!docSnap.exists()) {
-                        // المنتج جديد تمامًا (لم يتم إدخاله من قبل)
-                        transaction.set(productRef, {
-                            barcode: productBarcode,
-                            name: productName,
-                            scientificName: scientificName,
-                            purchasePrice: purchasePrice,
-                            salePrice: salePrice,
-                            supplier: supplier,
-                            description: description,
-                            createdAt: serverTimestamp(), // استخدام serverTimestamp من Firebase v9+ Modular
-                            lastUpdated: serverTimestamp(),
-                            batches: [] // Array لتخزين الدفعات المختلفة من نفس المنتج
-                        });
-                    } else {
-                        // المنتج موجود، نحدث بياناته الأساسية لو فيه تغيير
-                        transaction.update(productRef, {
-                            name: productName, // ممكن يكون اتغير الاسم التجاري
-                            scientificName: scientificName,
-                            purchasePrice: purchasePrice,
-                            salePrice: salePrice,
-                            supplier: supplier,
-                            description: description,
-                            lastUpdated: serverTimestamp(),
-                        });
-                    }
-
-                    // إضافة الدفعة الجديدة (batch) للمنتج
-                    const newBatch = {
-                        batchId: Date.now().toString(), // ID فريد للدفعة (ممكن يكون رقم فاتورة الشراء)
-                        quantity: quantity,
-                        expiryDate: expiryDate,
-                        receivedAt: serverTimestamp(),
-                        // ممكن نضيف تفاصيل تانية زي: مورد الدفعة دي، سعر شراء الدفعة
-                    };
-
-                    // الـ FieldValue.arrayUnion بتضيف عنصر جديد للمصفوفة بدون تكرار (هتستخدمها كده في v9+)
-                    // Firebase SDK v9+ بيخلي FieldValue جزء من firebase-firestore.js
-                    transaction.update(productRef, {
-                        batches: FieldValue.arrayUnion(newBatch)
-                    });
-                });
-
-                statusMessage.textContent = 'تم إضافة/تحديث المنتج بنجاح!';
-                statusMessage.classList.add('success');
-                productForm.reset(); // مسح النموذج بعد الإضافة
-                barcodeInput.disabled = false; // إعادة تفعيل حقل الباركود للمنتج الجديد
-                productNameInput.disabled = false; // إعادة تفعيل حقل اسم المنتج
-                qrScanResult.textContent = ''; // مسح نتيجة المسح
-            } catch (error) {
-                console.error("Error adding/updating product: ", error);
-                statusMessage.textContent = `خطأ في إضافة المنتج: ${error.message}`;
-                statusMessage.classList.add('error');
-            }
-        });
-
-        // وظيفة لإيقاف الماسح عند مغادرة الصفحة أو الحاجة
+        // تنظيف الماسح عند مغادرة الصفحة
         window.addEventListener('beforeunload', () => {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.error("Error stopping scanner on unload:", err));
-            }
-        });
-    </script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-</body>
-</html>
+            if (html5QrCodeScanner.is

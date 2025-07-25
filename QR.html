@@ -65,6 +65,13 @@
             border-radius: 8px;
             overflow: hidden;
             display: none; /* مخفي مبدئياً حتى يتم بدء المسح */
+            position: relative; /* مهم للتحكم في عناصر الفيديو الداخلية */
+        }
+
+        #qr-reader video {
+            width: 100% !important;
+            height: auto !important; /* لتجنب التشويه */
+            display: block;
         }
 
         #qr-reader__dashboard {
@@ -133,7 +140,8 @@
 
         <button id="startScanBtn" class="btn">بدء مسح الكيو آر / الباركود</button>
 
-        <div id="qr-reader"></div>
+        <div id="qr-reader">
+            </div>
         
         <p id="qr-scan-result">الرمز الممسوح: <span></span></p>
         
@@ -172,12 +180,14 @@
 
             displayStatusMessage(`تم مسح الرمز بنجاح: ${decodedText}`, 'success'); // رسالة نجاح
             startScanBtn.textContent = 'مسح رمز آخر'; // تغيير نص الزر
+            startScanBtn.style.display = "block"; // إظهار الزر
 
             // توقف الماسح الضوئي بعد المسح الأول لتجنب المسح المتكرر
             if (html5QrCodeScanner) {
                 html5QrCodeScanner.clear().then(() => {
                     document.getElementById(qrReaderId).style.display = "none"; // إخفاء منطقة الماسح
-                    startScanBtn.style.display = "block"; // إظهار الزر مرة أخرى
+                    // أعد ضبط حالة الزر ليظهر "بدء مسح الكيو آر" في المرة القادمة
+                    startScanBtn.onclick = startScanning; 
                 }).catch(error => {
                     console.error("Failed to clear html5QrcodeScanner. Maybe it's not running.", error);
                 });
@@ -194,7 +204,7 @@
         // دالة يتم استدعاؤها عند فشل المسح (ليس خطأ حرج)
         function onScanFailure(error) {
             // هذه الدالة يتم استدعاؤها بشكل متكرر عند عدم وجود QR Code في مجال الرؤية
-            // لا نعرض رسالة خطأ للمستخدم هنا لتجنب الإزعاج
+            // لا نعرض رسالة خطأ للمستخدم هنا لتجنب الإزعاج، فقط لتصحيح الأخطاء
             // console.warn(`QR scan failed: ${error}`); 
         }
 
@@ -203,31 +213,40 @@
             hideStatusMessage();
             displayStatusMessage('جاري طلب إذن الوصول إلى الكاميرا...', 'info');
             startScanBtn.disabled = true; // تعطيل الزر أثناء محاولة الفتح
+            qrScanResultP.style.display = "none"; // إخفاء نتيجة المسح السابقة
 
             try {
-                // محاولة الحصول على تدفق الفيديو (طلب الإذن)
-                // هذا هو الجزء الذي يثير طلب الأذونات
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                stream.getTracks().forEach(track => track.stop()); // إيقاف التدفق فورًا بعد الحصول على الإذن
+                // محاولة الحصول على تدفق الفيديو (هذا هو الجزء الذي يثير طلب الأذونات)
+                // يستخدم getCameras() لتحديد الكاميرا قبل البدء
+                const devices = await Html5Qrcode.getCameras();
+                if (devices && devices.length) {
+                    const rearCamera = devices.find(device => device.kind === 'videoinput' && device.label.toLowerCase().includes('back'));
+                    const cameraId = rearCamera ? rearCamera.id : devices[0].id; // استخدم الخلفية إن وجدت، وإلا الأولى
 
-                displayStatusMessage('تم منح إذن الكاميرا. جاري بدء المسح...', 'info');
-                document.getElementById(qrReaderId).style.display = "block"; // إظهار منطقة الماسح
+                    displayStatusMessage('تم منح إذن الكاميرا. جاري بدء المسح...', 'info');
+                    document.getElementById(qrReaderId).style.display = "block"; // إظهار منطقة الماسح
 
-                // تهيئة وبدء الماسح (Html5QrcodeScanner أصبح متاحاً عالمياً بعد استيراده)
-                html5QrCodeScanner = new Html5QrcodeScanner(
-                    qrReaderId,
-                    { 
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        rememberLastUsedCamera: true,
-                    },
-                    /* verbose= */ false
-                );
+                    // تهيئة وبدء الماسح
+                    html5QrCodeScanner = new Html5QrcodeScanner(
+                        qrReaderId,
+                        { 
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 },
+                            rememberLastUsedCamera: true,
+                            // تحديد الكاميرا المراد استخدامها صراحةً
+                            cameraId: cameraId, 
+                            facingMode: rearCamera ? 'environment' : 'user' // 'environment' للخلفية، 'user' للأمامية
+                        },
+                        /* verbose= */ false
+                    );
 
-                // render() بترجع Promise بيتم حلها عند بدء المسح بنجاح
-                await html5QrCodeScanner.render(onScanSuccess, onScanFailure);
-                hideStatusMessage(); // إخفاء رسالة الحالة بعد بدء المسح بنجاح
+                    // render() ترجع Promise يتم حلها عند بدء المسح بنجاح
+                    await html5QrCodeScanner.render(onScanSuccess, onScanFailure);
+                    hideStatusMessage(); // إخفاء رسالة الحالة بعد بدء المسح بنجاح
 
+                } else {
+                    handleCameraError(new Error("No cameras found."));
+                }
             } catch (error) {
                 console.error("Camera access error:", error);
                 handleCameraError(error); // عرض رسالة خطأ مناسبة للمستخدم
@@ -249,6 +268,8 @@
                 errorMessage = 'لا يمكن تلبية متطلبات الكاميرا المحددة. حاول تحديث المتصفح أو التأكد من أن الكاميرا تعمل بشكل صحيح.';
             } else if (error.message && error.message.includes("Only secure origins are allowed")) {
                 errorMessage = 'يتطلب الوصول إلى الكاميرا أن تكون الصفحة تعمل على بروتوكول آمن (HTTPS) أو على localhost.';
+            } else if (error.message && error.message.includes("No cameras found")) {
+                 errorMessage = 'لم يتم العثور على أي كاميرات متوفرة على جهازك.';
             }
             displayStatusMessage(errorMessage, 'error');
             document.getElementById(qrReaderId).style.display = "none"; // إخفاء منطقة الماسح

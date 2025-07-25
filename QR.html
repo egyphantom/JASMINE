@@ -15,6 +15,7 @@
             --border-color: #e2e6ea;
             --success-color: #28a745;
             --error-color: #dc3545;
+            --button-hover-color: #218838;
         }
 
         body {
@@ -38,9 +39,9 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px; /* زيادة العرض قليلاً */
+            max-width: 500px;
             text-align: center;
-            box-sizing: border-box; /* لضمان أن البادينغ لا يزيد العرض الكلي */
+            box-sizing: border-box;
         }
 
         h1 {
@@ -58,16 +59,16 @@
 
         #qr-reader {
             width: 100%;
-            max-width: 400px; /* زيادة عرض الماسح */
+            max-width: 400px;
             margin: 0 auto 25px auto;
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            overflow: hidden; /* لمنع أي تجاوز بصري */
+            overflow: hidden;
+            display: none; /* مخفي مبدئياً حتى يتم بدء المسح */
         }
 
-        /* إخفاء لوحة التحكم الافتراضية للماسح إذا لم تكن مطلوبة */
         #qr-reader__dashboard {
-            display: none !important;
+            display: none !important; /* إخفاء لوحة التحكم الافتراضية للماسح */
         }
 
         #qr-scan-result {
@@ -76,9 +77,10 @@
             color: var(--secondary-color);
             margin-top: 20px;
             padding: 10px;
-            background-color: #e9f7ee; /* خلفية خفيفة للنتيجة */
+            background-color: #e9f7ee;
             border-radius: 5px;
             border: 1px solid #c3e6cb;
+            display: none; /* مخفي مبدئياً */
         }
 
         .message-box {
@@ -86,6 +88,7 @@
             padding: 15px;
             border-radius: 8px;
             font-weight: 600;
+            text-align: center;
         }
 
         .message-box.error {
@@ -99,20 +102,43 @@
             color: #6c757d;
             border: 1px solid #d6d8db;
         }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: var(--button-hover-color);
+        }
+
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>مسح رمز QR للدواء</h1>
-        <p>يرجى توجيه كاميرا جهازك نحو رمز QR أو الباركود الموجود على علبة الدواء لتسجيله في المخزون.</p>
+        <p>اضغط على الزر أدناه لبدء عملية المسح والسماح بالوصول إلى الكاميرا.</p>
+
+        <button id="startScanBtn" class="btn">بدء مسح الكيو آر / الباركود</button>
 
         <div id="qr-reader"></div>
         
-        <p id="qr-scan-result" style="display: none;">الرمز الممسوح: <span></span></p>
+        <p id="qr-scan-result">الرمز الممسوح: <span></span></p>
         
-        <div id="status-message" class="message-box info" style="display: block;">
-            جاري تهيئة الكاميرا... يرجى السماح بالوصول.
-        </div>
+        <div id="status-message" class="message-box info" style="display: none;">
+            </div>
     </div>
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -123,19 +149,21 @@
         const qrScanResultSpan = document.querySelector("#qr-scan-result span");
         const qrScanResultP = document.getElementById("qr-scan-result");
         const statusMessageDiv = document.getElementById("status-message");
+        const startScanBtn = document.getElementById("startScanBtn");
 
-        // تهيئة الماسح الضوئي
-        const html5QrCodeScanner = new Html5QrcodeScanner(
-            qrReaderId,
-            { 
-                fps: 10,                 // عدد الإطارات في الثانية
-                qrbox: { width: 250, height: 250 }, // حجم مربع المسح
-                rememberLastUsedCamera: true, // تذكر الكاميرا المستخدمة آخر مرة
-                // Other options for advanced camera selection
-                // disableFlip: false, // يمكن تفعيلها لمنع عكس الصورة إذا كانت الكاميرا الأمامية هي الافتراضية
-            },
-            /* verbose= */ false // لا تعرض رسائل تفصيلية في الكونسول
-        );
+        let html5QrCodeScanner = null; // سيتم تهيئته عند بدء المسح
+
+        // دالة لعرض رسائل الحالة
+        function displayStatusMessage(message, type = 'info') {
+            statusMessageDiv.textContent = message;
+            statusMessageDiv.className = `message-box ${type}`;
+            statusMessageDiv.style.display = 'block';
+        }
+
+        // دالة لإخفاء رسائل الحالة
+        function hideStatusMessage() {
+            statusMessageDiv.style.display = 'none';
+        }
 
         // دالة يتم استدعاؤها عند المسح الناجح
         function onScanSuccess(decodedText, decodedResult) {
@@ -143,11 +171,18 @@
             qrScanResultSpan.innerText = decodedText;
             qrScanResultP.style.display = "block"; // إظهار النتيجة
 
+            displayStatusMessage(`تم مسح الرمز بنجاح: ${decodedText}`, 'success'); // رسالة نجاح
+            startScanBtn.textContent = 'مسح رمز آخر'; // تغيير نص الزر
+
             // توقف الماسح الضوئي بعد المسح الأول لتجنب المسح المتكرر
-            html5QrCodeScanner.clear().catch(error => {
-                console.error("Failed to clear html5QrcodeScanner. Maybe it's not running.", error);
-            });
-            statusMessageDiv.style.display = 'none'; // إخفاء رسالة الحالة
+            if (html5QrCodeScanner) {
+                html5QrCodeScanner.clear().then(() => {
+                    document.getElementById(qrReaderId).style.display = "none"; // إخفاء منطقة الماسح
+                    startScanBtn.style.display = "block"; // إظهار الزر مرة أخرى
+                }).catch(error => {
+                    console.error("Failed to clear html5QrcodeScanner. Maybe it's not running.", error);
+                });
+            }
 
             // *******************************************************************
             // هنا يمكنك إضافة الكود الخاص بك للتعامل مع رمز الدواء الممسوح
@@ -159,39 +194,77 @@
 
         // دالة يتم استدعاؤها عند فشل المسح (ليس خطأ حرج)
         function onScanFailure(error) {
-            // يتم استدعاء هذه الدالة بشكل متكرر عند عدم وجود QR Code في مجال الرؤية
-            // يمكنك استخدامها للتصحيح إذا لزم الأمر
-            // console.warn(`QR scan failed: ${error}`);
+            // هذه الدالة يتم استدعاؤها بشكل متكرر عند عدم وجود QR Code في مجال الرؤية
+            // لا نعرض رسالة خطأ للمستخدم هنا لتجنب الإزعاج
+            // console.warn(`QR scan failed: ${error}`); 
+        }
+
+        // دالة لبدء عملية المسح وطلب الأذونات
+        async function startScanning() {
+            hideStatusMessage();
+            displayStatusMessage('جاري طلب إذن الوصول إلى الكاميرا...', 'info');
+            startScanBtn.disabled = true; // تعطيل الزر أثناء محاولة الفتح
+
+            try {
+                // محاولة الحصول على تدفق الفيديو (طلب الإذن)
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop()); // إيقاف التدفق فورًا بعد الحصول على الإذن
+
+                displayStatusMessage('تم منح إذن الكاميرا. جاري بدء المسح...', 'info');
+                document.getElementById(qrReaderId).style.display = "block"; // إظهار منطقة الماسح
+
+                // تهيئة وبدء الماسح
+                html5QrCodeScanner = new Html5QrcodeScanner(
+                    qrReaderId,
+                    { 
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        rememberLastUsedCamera: true,
+                    },
+                    /* verbose= */ false
+                );
+
+                await html5QrCodeScanner.render(onScanSuccess, onScanFailure);
+                hideStatusMessage(); // إخفاء رسالة الحالة بعد بدء المسح بنجاح
+
+            } catch (error) {
+                console.error("Camera access error:", error);
+                handleCameraError(error); // عرض رسالة خطأ مناسبة للمستخدم
+            } finally {
+                startScanBtn.disabled = false; // إعادة تفعيل الزرار
+            }
         }
 
         // دالة لمعالجة الأخطاء التي تمنع تشغيل الكاميرا
         function handleCameraError(error) {
-            console.error("Camera access error:", error);
-            statusMessageDiv.classList.remove('info');
-            statusMessageDiv.classList.add('error');
-            statusMessageDiv.style.display = 'block';
-
+            let errorMessage = 'حدث خطأ أثناء محاولة فتح الكاميرا.';
             if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-                statusMessageDiv.innerHTML = 'تم رفض الوصول إلى الكاميرا. يرجى السماح للموقع بالوصول إلى الكاميرا في إعدادات المتصفح.';
+                errorMessage = 'تم رفض الوصول إلى الكاميرا. يرجى السماح للموقع بالوصول إلى الكاميرا في إعدادات المتصفح.';
             } else if (error.name === "NotFoundError") {
-                statusMessageDiv.innerHTML = 'لم يتم العثور على أي كاميرا متوفرة على جهازك.';
+                errorMessage = 'لم يتم العثور على أي كاميرا متوفرة على جهازك.';
             } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
-                statusMessageDiv.innerHTML = 'لا يمكن قراءة مصدر الفيديو. قد تكون الكاميرا قيد الاستخدام بواسطة تطبيق آخر.';
+                errorMessage = 'لا يمكن قراءة مصدر الفيديو. قد تكون الكاميرا قيد الاستخدام بواسطة تطبيق آخر، أو هناك مشكلة في برامج التشغيل.';
             } else if (error.name === "OverconstrainedError") {
-                 statusMessageDiv.innerHTML = 'لا يمكن تلبية متطلبات الكاميرا المحددة. حاول تحديث المتصفح.';
+                errorMessage = 'لا يمكن تلبية متطلبات الكاميرا المحددة. حاول تحديث المتصفح أو التأكد من أن الكاميرا تعمل بشكل صحيح.';
+            } else if (error.message.includes("Only secure origins are allowed")) {
+                errorMessage = 'يتطلب الوصول إلى الكاميرا أن تكون الصفحة تعمل على بروتوكول آمن (HTTPS) أو على localhost.';
             }
-            else {
-                statusMessageDiv.innerHTML = `خطأ غير متوقع في الكاميرا: ${error.message}. يرجى المحاولة مرة أخرى.`;
-            }
-            // إخفاء منطقة الماسح إذا حدث خطأ حرج
-            document.getElementById(qrReaderId).style.display = "none";
+            displayStatusMessage(errorMessage, 'error');
+            document.getElementById(qrReaderId).style.display = "none"; // إخفاء منطقة الماسح
         }
 
-        // بدء تشغيل الماسح الضوئي عند تحميل الصفحة
-        html5QrCodeScanner.render(onScanSuccess, onScanFailure).then(() => {
-            statusMessageDiv.style.display = 'none'; // إخفاء رسالة التحميل إذا نجح
-        }).catch(handleCameraError); // Catch any errors during scanner rendering (e.g., camera access)
+        // إضافة مستمع الحدث لزر بدء المسح
+        startScanBtn.addEventListener('click', startScanning);
 
         // تنظيف الماسح عند مغادرة الصفحة
         window.addEventListener('beforeunload', () => {
-            if (html5QrCodeScanner.is
+            if (html5QrCodeScanner) {
+                html5QrCodeScanner.clear().catch(err => console.error("Error stopping scanner on unload:", err));
+            }
+        });
+
+        // رسالة أولية عند تحميل الصفحة
+        displayStatusMessage('اضغط على "بدء مسح الكيو آر / الباركود" لتشغيل الكاميرا.', 'info');
+    </script>
+</body>
+</html>
